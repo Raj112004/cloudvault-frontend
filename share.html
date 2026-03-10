@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CloudVault — Shared File</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0c0c0e;
+    --surface: #161618;
+    --border: #222226;
+    --text: #f2f2f4;
+    --text2: #888896;
+    --accent: #5b7fff;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo { font-size: 17px; font-weight: 600; color: var(--text); text-decoration: none; }
+  .logo span { color: var(--accent); }
+
+  .page {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    gap: 20px;
+  }
+
+  .file-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    width: 100%;
+    max-width: 860px;
+  }
+
+  /* ===== PRESTO-STYLE PLAYER ===== */
+  .player-wrap {
+    position: relative;
+    width: 100%;
+    background: #000;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+  }
+
+  .player-wrap video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  .player-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  /* Controls fade layer */
+  .controls-layer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+  }
+
+  .controls-layer.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  /* Center play button */
+  .center-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.55);
+    border: 2.5px solid rgba(255,255,255,0.7);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.18s ease, background 0.18s ease, opacity 0.35s ease;
+    pointer-events: all;
+    opacity: 0;
+  }
+
+  .controls-layer.visible .center-btn {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .center-btn:hover {
+    background: rgba(0,0,0,0.75);
+    transform: translate(-50%, -50%) scale(1.08) !important;
+  }
+
+  .center-btn svg { width: 28px; height: 28px; fill: white; }
+
+  /* Bottom gradient + controls */
+  .bottom-controls {
+    background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
+    padding: 40px 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Progress */
+  .progress-wrap {
+    position: relative;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .progress-track {
+    position: absolute;
+    left: 0; right: 0;
+    height: 4px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 2px;
+    overflow: hidden;
+    transition: height 0.15s;
+  }
+
+  .progress-wrap:hover .progress-track { height: 6px; }
+
+  .progress-buf {
+    position: absolute;
+    height: 100%;
+    background: rgba(255,255,255,0.28);
+    border-radius: 2px;
+    width: 0%;
+    pointer-events: none;
+  }
+
+  .progress-fill {
+    position: absolute;
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    width: 0%;
+    pointer-events: none;
+  }
+
+  .progress-thumb {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: white;
+    border-radius: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    pointer-events: none;
+    transition: transform 0.15s;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.6);
+    left: 0%;
+  }
+
+  .progress-wrap:hover .progress-thumb { transform: translate(-50%, -50%) scale(1); }
+
+  /* Time tooltip */
+  .time-tooltip {
+    position: absolute;
+    bottom: 22px;
+    background: rgba(0,0,0,0.85);
+    color: white;
+    font-size: 11px;
+    padding: 3px 7px;
+    border-radius: 4px;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    transition: opacity 0.1s;
+  }
+
+  .progress-wrap:hover .time-tooltip { opacity: 1; }
+
+  /* Buttons row */
+  .btn-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .cbtn {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.88);
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s, background 0.15s;
+    font-size: 13px;
+  }
+
+  .cbtn:hover { color: white; background: rgba(255,255,255,0.1); }
+  .cbtn svg { width: 18px; height: 18px; fill: currentColor; }
+
+  .time-display {
+    font-size: 12px;
+    color: rgba(255,255,255,0.75);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    padding: 0 6px;
+    flex: 1;
+  }
+
+  .vol-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .vol-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 72px;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.25);
+    outline: none;
+    cursor: pointer;
+  }
+
+  .vol-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+  }
+
+  /* Click ripple */
+  .ripple {
+    position: absolute;
+    top: 50%;
+    pointer-events: none;
+    transform: translateY(-50%);
+  }
+
+  .ripple-circle {
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: white;
+    animation: rippleAnim 0.6s ease forwards;
+  }
+
+  @keyframes rippleAnim {
+    0% { opacity: 1; transform: scale(0.6); }
+    100% { opacity: 0; transform: scale(1.5); }
+  }
+
+  /* Audio player */
+  .audio-player {
+    background: #0a0a0c;
+    aspect-ratio: 16/9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 40px;
+  }
+
+  .audio-art {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    animation: spin 8s linear infinite paused;
+  }
+
+  .audio-art.playing { animation-play-state: running; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .audio-controls {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .audio-prog-wrap {
+    position: relative;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .audio-prog-track {
+    position: absolute;
+    left: 0; right: 0;
+    height: 3px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 2px;
+  }
+
+  .audio-prog-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    width: 0%;
+  }
+
+  .audio-btns {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .audio-time {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+  }
+
+  /* File info section */
+  .file-info-bar {
+    padding: 18px 22px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .file-name-big {
+    font-size: 15px;
+    font-weight: 600;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .file-meta-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--text2);
+    font-family: 'Inter', monospace;
+  }
+
+  .dl-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    transition: opacity 0.15s;
+    text-decoration: none;
+  }
+
+  .dl-btn:hover { opacity: 0.88; }
+
+  .loading-state, .error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    min-height: 300px;
+    color: var(--text2);
+  }
+
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin2 0.8s linear infinite;
+  }
+
+  @keyframes spin2 { to { transform: rotate(360deg); } }
+
+  footer {
+    padding: 20px 32px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text2);
+    border-top: 1px solid var(--border);
+  }
+
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="https://cloudvault17.netlify.app">Cloud<span>Vault</span></a>
+</header>
+
+<div class="page">
+  <div class="file-card" id="fileCard">
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading file...</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Shared via <a href="https://cloudvault17.netlify.app">CloudVault</a> — Free file hosting & streaming
+</footer>
+
+<script>
+const BACKEND_URL = 'https://cloudvault-backend-utgb.onrender.com';
+
+// Get share code from URL: /share.html?f=abc123 or /f/abc123
+function getShareCode() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('f')) return params.get('f');
+  const parts = window.location.pathname.split('/');
+  return parts[parts.length - 1] || null;
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  if (bytes < 1024*1024*1024) return (bytes/(1024*1024)).toFixed(1) + ' MB';
+  return (bytes/(1024*1024*1024)).toFixed(2) + ' GB';
+}
+
+function fmt(s) {
+  if (!s || isNaN(s)) return '0:00';
+  const m = Math.floor(s/60), sec = Math.floor(s%60);
+  return m + ':' + sec.toString().padStart(2,'0');
+}
+
+// ======== VIDEO PLAYER ========
+function buildVideoPlayer(url, type, fileId) {
+  return `
+    <div class="player-wrap" id="playerWrap">
+      <video id="vid" preload="metadata" playsinline>
+        <source src="${url}" type="${type || 'video/mp4'}">
+      </video>
+      <div class="controls-layer" id="ctrlLayer">
+        <button class="center-btn" id="centerBtn" onclick="togglePlay()">
+          <svg id="centerIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <div class="bottom-controls">
+          <div class="progress-wrap" id="progWrap">
+            <div class="progress-track">
+              <div class="progress-buf" id="progBuf"></div>
+              <div class="progress-fill" id="progFill"></div>
+            </div>
+            <div class="progress-thumb" id="progThumb"></div>
+            <div class="time-tooltip" id="timeTip">0:00</div>
+          </div>
+          <div class="btn-row">
+            <button class="cbtn" id="playBtn" onclick="togglePlay()" title="Play/Pause">
+              <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <button class="cbtn" onclick="skip(-10)" title="Rewind 10s">
+              <svg viewBox="0 0 24 24"><path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6h-2c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8zm-1.1 11h-.85v-3.26l-1.01.31v-.69l1.77-.63h.09V16zm4.28-1.76c0 .32-.03.6-.1.82s-.17.42-.29.57-.28.26-.45.33-.37.1-.59.1-.41-.03-.59-.1-.33-.18-.46-.33-.23-.34-.3-.57-.11-.5-.11-.82v-.74c0-.32.03-.6.1-.82s.17-.42.29-.57.28-.26.45-.33.37-.1.59-.1.41.03.59.1.33.18.46.33.23.34.3.57.11.5.11.82v.74zm-.85-.86c0-.19-.01-.35-.04-.48s-.07-.23-.12-.31-.11-.13-.19-.17-.16-.05-.25-.05-.18.02-.25.05-.14.09-.19.17-.09.18-.12.31-.04.29-.04.48v.97c0 .19.01.35.04.49s.07.24.12.32.11.14.19.17.16.06.25.06.18-.02.25-.06.14-.09.19-.17.09-.19.11-.32.04-.3.04-.49v-.97z"/></svg>
+            </button>
+            <button class="cbtn" onclick="skip(10)" title="Forward 10s">
+              <svg viewBox="0 0 24 24"><path d="M18 13c0 3.31-2.69 6-6 6s-6-2.69-6-6 2.69-6 6-6v4l5-5-5-5v4c-4.42 0-8 3.58-8 8s3.58 8 8 8 8-3.58 8-8h-2zm-4.85 3h-.85v-3.26l-1.01.31v-.69l1.77-.63h.09V16zm4.28-1.76c0 .32-.03.6-.1.82s-.17.42-.29.57-.28.26-.45.33-.37.1-.59.1-.41-.03-.59-.1-.33-.18-.46-.33-.23-.34-.3-.57-.11-.5-.11-.82v-.74c0-.32.03-.6.1-.82s.17-.42.29-.57.28-.26.45-.33.37-.1.59-.1.41.03.59.1.33.18.46.33.23.34.3.57.11.5.11.82v.74zm-.85-.86c0-.19-.01-.35-.04-.48s-.07-.23-.12-.31-.11-.13-.19-.17-.16-.05-.25-.05-.18.02-.25.05-.14.09-.19.17-.09.18-.12.31-.04.29-.04.48v.97c0 .19.01.35.04.49s.07.24.12.32.11.14.19.17.16.06.25.06.18-.02.25-.06.14-.09.19-.17.09-.19.11-.32.04-.3.04-.49v-.97z"/></svg>
+            </button>
+            <span class="time-display" id="timeDisp">0:00 / 0:00</span>
+            <div class="vol-wrap">
+              <button class="cbtn" id="volBtn" onclick="toggleMute()" title="Mute">
+                <svg id="volIcon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+              </button>
+              <input class="vol-slider" type="range" min="0" max="1" step="0.02" value="1" oninput="setVol(this.value)" id="volSlider">
+            </div>
+            <button class="cbtn" onclick="toggleFS()" title="Fullscreen">
+              <svg id="fsIcon" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ======== AUDIO PLAYER ========
+function buildAudioPlayer(url, name) {
+  return `
+    <div class="audio-player" id="audioWrap">
+      <div class="audio-art" id="audioArt">🎵</div>
+      <div class="audio-controls">
+        <div class="audio-prog-wrap" id="audioProg">
+          <div class="audio-prog-track">
+            <div class="audio-prog-fill" id="audioFill"></div>
+          </div>
+        </div>
+        <div class="audio-time">
+          <span id="audCurr">0:00</span>
+          <span id="audDur">0:00</span>
+        </div>
+        <div class="audio-btns">
+          <button class="cbtn" onclick="skip(-10)">
+            <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white"><path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6h-2c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+          </button>
+          <button class="cbtn" id="audioPlayBtn" onclick="togglePlay()" style="width:48px;height:48px;background:var(--accent);border-radius:50%;color:white">
+            <svg id="audioPlayIcon" viewBox="0 0 24 24" style="width:22px;height:22px;fill:white"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+          <button class="cbtn" onclick="skip(10)">
+            <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white"><path d="M18 13c0 3.31-2.69 6-6 6s-6-2.69-6-6 2.69-6 6-6v4l5-5-5-5v4c-4.42 0-8 3.58-8 8s3.58 8 8 8 8-3.58 8-8h-2z"/></svg>
+          </button>
+        </div>
+      </div>
+      <audio id="vid" src="${url}" preload="metadata"></audio>
+    </div>`;
+}
+
+// ======== INIT PLAYER ========
+function initPlayer(type) {
+  const vid = document.getElementById('vid');
+  if (!vid) return;
+
+  const isVideo = type === 'video';
+  const isAudio = type === 'audio';
+
+  // Progress update
+  vid.addEventListener('timeupdate', function() {
+    const pct = (vid.currentTime / vid.duration * 100) || 0;
+    if (isVideo) {
+      document.getElementById('progFill').style.width = pct + '%';
+      document.getElementById('progThumb').style.left = pct + '%';
+    } else if (isAudio) {
+      document.getElementById('audioFill').style.width = pct + '%';
+      document.getElementById('audCurr').textContent = fmt(vid.currentTime);
+    }
+    if (isVideo) document.getElementById('timeDisp').textContent = fmt(vid.currentTime) + ' / ' + fmt(vid.duration);
+  });
+
+  vid.addEventListener('loadedmetadata', function() {
+    if (isAudio) document.getElementById('audDur').textContent = fmt(vid.duration);
+  });
+
+  // Buffer
+  if (isVideo) {
+    vid.addEventListener('progress', function() {
+      if (vid.buffered.length > 0) {
+        const bufPct = vid.buffered.end(vid.buffered.length-1) / vid.duration * 100 || 0;
+        document.getElementById('progBuf').style.width = bufPct + '%';
+      }
+    });
+  }
+
+  // Play/pause state
+  vid.addEventListener('play', function() {
+    setPlayIcon(false);
+    if (isAudio) document.getElementById('audioArt').classList.add('playing');
+  });
+
+  vid.addEventListener('pause', function() {
+    setPlayIcon(true);
+    if (isAudio) document.getElementById('audioArt').classList.remove('playing');
+  });
+
+  vid.addEventListener('ended', function() {
+    setPlayIcon(true);
+  });
+
+  // Progress click seek
+  const progEl = document.getElementById(isVideo ? 'progWrap' : 'audioProg');
+  if (progEl) {
+    progEl.addEventListener('click', function(e) {
+      const rect = progEl.getBoundingClientRect();
+      const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      vid.currentTime = pct * vid.duration;
+    });
+
+    if (isVideo) {
+      progEl.addEventListener('mousemove', function(e) {
+        const rect = progEl.getBoundingClientRect();
+        const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const tip = document.getElementById('timeTip');
+        tip.style.left = (pct * 100) + '%';
+        tip.textContent = fmt(pct * vid.duration);
+      });
+    }
+  }
+
+  // Auto-hide controls (video only)
+  if (isVideo) {
+    const wrap = document.getElementById('playerWrap');
+    const layer = document.getElementById('ctrlLayer');
+    let hideTimer;
+
+    function showCtrl() {
+      layer.classList.add('visible');
+      wrap.style.cursor = 'default';
+      clearTimeout(hideTimer);
+      if (!vid.paused) {
+        hideTimer = setTimeout(function() {
+          layer.classList.remove('visible');
+          wrap.style.cursor = 'none';
+        }, 3000);
+      }
+    }
+
+    wrap.addEventListener('mousemove', showCtrl);
+    wrap.addEventListener('mouseenter', showCtrl);
+    wrap.addEventListener('mouseleave', function() {
+      clearTimeout(hideTimer);
+      if (!vid.paused) {
+        layer.classList.remove('visible');
+        wrap.style.cursor = 'none';
+      }
+    });
+
+    vid.addEventListener('pause', function() {
+      clearTimeout(hideTimer);
+      layer.classList.add('visible');
+      wrap.style.cursor = 'default';
+    });
+
+    vid.addEventListener('play', function() {
+      hideTimer = setTimeout(function() {
+        layer.classList.remove('visible');
+        wrap.style.cursor = 'none';
+      }, 3000);
+    });
+
+    // Double-tap to seek
+    wrap.addEventListener('dblclick', function(e) {
+      const rect = wrap.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      if (x < rect.width / 3) {
+        skip(-10); showRipple(wrap, 'left', '⏪ 10s');
+      } else if (x > rect.width * 2/3) {
+        skip(10); showRipple(wrap, 'right', '⏩ 10s');
+      } else {
+        togglePlay();
+      }
+    });
+
+    // Show controls initially
+    layer.classList.add('visible');
+    hideTimer = setTimeout(function() {
+      if (!vid.paused) layer.classList.remove('visible');
+    }, 3000);
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+      if (e.code === 'ArrowLeft') { e.preventDefault(); skip(-5); }
+      if (e.code === 'ArrowRight') { e.preventDefault(); skip(5); }
+      if (e.code === 'ArrowUp') { e.preventDefault(); setVol(Math.min(1, vid.volume + 0.1)); document.getElementById('volSlider').value = vid.volume; }
+      if (e.code === 'ArrowDown') { e.preventDefault(); setVol(Math.max(0, vid.volume - 0.1)); document.getElementById('volSlider').value = vid.volume; }
+      if (e.code === 'KeyF') { e.preventDefault(); toggleFS(); }
+      if (e.code === 'KeyM') { e.preventDefault(); toggleMute(); }
+    });
+  }
+}
+
+function setPlayIcon(paused) {
+  const playPath = "M8 5v14l11-7z";
+  const pausePath = "M6 19h4V5H6v14zm8-14v14h4V5h-4z";
+  const icons = ['playIcon', 'centerIcon', 'audioPlayIcon'].filter(id => document.getElementById(id));
+  icons.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('d', paused ? playPath : pausePath);
+  });
+}
+
+function showRipple(wrap, side, text) {
+  const r = document.createElement('div');
+  r.className = 'ripple';
+  r.style.left = side === 'left' ? '18%' : '82%';
+  r.innerHTML = '<div class="ripple-circle">' + text + '</div>';
+  wrap.appendChild(r);
+  setTimeout(() => r.remove(), 700);
+}
+
+window.togglePlay = function() {
+  const vid = document.getElementById('vid');
+  if (!vid) return;
+  vid.paused ? vid.play() : vid.pause();
+};
+
+window.skip = function(s) {
+  const vid = document.getElementById('vid');
+  if (!vid) return;
+  vid.currentTime = Math.max(0, Math.min(vid.duration || 0, vid.currentTime + s));
+};
+
+window.setVol = function(v) {
+  const vid = document.getElementById('vid');
+  if (vid) { vid.volume = v; vid.muted = v == 0; updateVolIcon(v > 0); }
+};
+
+window.toggleMute = function() {
+  const vid = document.getElementById('vid');
+  if (!vid) return;
+  vid.muted = !vid.muted;
+  const slider = document.getElementById('volSlider');
+  if (slider) slider.value = vid.muted ? 0 : vid.volume;
+  updateVolIcon(!vid.muted);
+};
+
+function updateVolIcon(unmuted) {
+  const icon = document.getElementById('volIcon');
+  if (!icon) return;
+  icon.setAttribute('d', unmuted
+    ? 'M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z'
+    : 'M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z'
+  );
+}
+
+window.toggleFS = function() {
+  const el = document.getElementById('playerWrap') || document.documentElement;
+  if (!document.fullscreenElement) {
+    el.requestFullscreen && el.requestFullscreen();
+  } else {
+    document.exitFullscreen && document.exitFullscreen();
+  }
+};
+
+// ======== LOAD FILE ========
+async function loadFile() {
+  const code = getShareCode();
+  const card = document.getElementById('fileCard');
+
+  if (!code || code === 'share.html') {
+    card.innerHTML = '<div class="error-state"><span style="font-size:48px">🔗</span><p>No file specified</p></div>';
+    return;
+  }
+
+  try {
+    const res = await fetch(BACKEND_URL + '/files');
+    const files = await res.json();
+    const file = files.find(f => f.share_code === code || f.id === code);
+
+    if (!file) {
+      card.innerHTML = '<div class="error-state"><span style="font-size:48px">❌</span><p>File not found or link expired</p></div>';
+      return;
+    }
+
+    document.title = file.name + ' — CloudVault';
+    const url = file.public_url;
+    const cat = file.category;
+    const ext = file.name.split('.').pop().toUpperCase();
+    const size = formatSize(file.size);
+
+    let mediaHtml = '';
+    if (cat === 'video') {
+      mediaHtml = buildVideoPlayer(url, file.type, file.id);
+    } else if (cat === 'audio') {
+      mediaHtml = buildAudioPlayer(url, file.name);
+    } else if (cat === 'image') {
+      mediaHtml = '<div class="player-wrap" style="background:#0a0a0c"><img src="' + url + '" alt="' + file.name + '"></div>';
+    } else {
+      mediaHtml = '<div class="player-wrap" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;color:#888"><span style="font-size:56px">📄</span><p style="font-size:14px">No preview available</p></div>';
+    }
+
+    card.innerHTML = mediaHtml + `
+      <div class="file-info-bar">
+        <div class="file-name-big">${file.name}</div>
+        <div class="file-meta-tags">
+          <span class="tag">${ext}</span>
+          <span class="tag">${size}</span>
+        </div>
+        <a class="dl-btn" href="${url}" download="${file.name}" target="_blank">
+          <svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:white"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          Download
+        </a>
+      </div>`;
+
+    initPlayer(cat);
+
+  } catch (err) {
+    card.innerHTML = '<div class="error-state"><span style="font-size:48px">⚠️</span><p>Failed to load file. Try again later.</p></div>';
+  }
+}
+
+loadFile();
+</script>
+</body>
+</html>
