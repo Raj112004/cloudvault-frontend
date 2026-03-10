@@ -667,12 +667,7 @@
     align-items: center;
     justify-content: center;
     position: relative;
-  }
-
-  .video-container video {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+    overflow: hidden;
   }
 
   .video-placeholder {
@@ -685,6 +680,135 @@
 
   .video-placeholder span { font-size: 48px; }
   .video-placeholder p { font-size: 13px; }
+
+  /* Custom Video Player */
+  .custom-player {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    cursor: pointer;
+  }
+
+  .custom-player video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  .player-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .custom-player:hover .player-overlay,
+  .custom-player.paused .player-overlay {
+    opacity: 1;
+  }
+
+  .player-big-btn {
+    width: 64px;
+    height: 64px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: white;
+    transition: all 0.2s;
+    pointer-events: none;
+  }
+
+  .player-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 32px 16px 14px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.85));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .custom-player:hover .player-controls,
+  .custom-player.paused .player-controls {
+    opacity: 1;
+  }
+
+  .player-progress {
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+    cursor: pointer;
+    position: relative;
+    transition: height 0.15s;
+  }
+
+  .player-progress:hover { height: 6px; }
+
+  .player-progress-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    width: 0%;
+    pointer-events: none;
+  }
+
+  .player-bottom {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .player-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px;
+    opacity: 0.9;
+    transition: opacity 0.15s;
+    display: flex;
+    align-items: center;
+  }
+
+  .player-btn:hover { opacity: 1; }
+
+  .player-time {
+    font-size: 12px;
+    color: rgba(255,255,255,0.8);
+    font-family: 'DM Mono', monospace;
+    flex: 1;
+  }
+
+  .player-vol {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .player-vol input[type=range] {
+    width: 70px;
+    height: 3px;
+    accent-color: white;
+    cursor: pointer;
+  }
 
   .modal-footer {
     padding: 14px 20px;
@@ -1179,6 +1303,12 @@
     return `<span style="font-size:36px">${getFileEmoji(f.category)}</span>`;
   }
 
+  function formatTime(s) {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return m + ':' + sec.toString().padStart(2,'0');
+  }
+
   function openFile(id) {
     const f = files.find(x => x.id == id);
     if (!f) return;
@@ -1188,31 +1318,103 @@
 
     document.getElementById('modalTitle').textContent = f.name;
     document.getElementById('modalIcon').textContent = getFileEmoji(f.category);
-    document.getElementById('modalInfo').textContent = `${f.ext.toUpperCase()} · ${formatSize(f.size)} · ${formatDate(f.date)}`;
+    document.getElementById('modalInfo').textContent = f.ext.toUpperCase() + ' · ' + formatSize(f.size) + ' · ' + formatDate(f.date);
 
     const container = document.getElementById('videoContainer');
 
     if (f.category === 'video') {
-      container.innerHTML = `<video src="${f.url}" controls autoplay style="width:100%;height:100%;object-fit:contain;"></video>`;
+      container.innerHTML = '<div class="custom-player paused" id="customPlayer">' +
+        '<video id="mainVideo" preload="metadata"><source src="' + f.url + '" type="' + (f.type || 'video/mp4') + '"></video>' +
+        '<div class="player-overlay"><div class="player-big-btn" id="bigBtn">▶</div></div>' +
+        '<div class="player-controls">' +
+          '<div class="player-progress" id="progressBar"><div class="player-progress-bar" id="progressFill"></div></div>' +
+          '<div class="player-bottom">' +
+            '<button class="player-btn" id="playPauseBtn" onclick="togglePlay()">▶</button>' +
+            '<button class="player-btn" onclick="skipVideo(-10)">⏪</button>' +
+            '<button class="player-btn" onclick="skipVideo(10)">⏩</button>' +
+            '<span class="player-time" id="timeDisplay">0:00 / 0:00</span>' +
+            '<div class="player-vol"><button class="player-btn" onclick="toggleMute()">🔊</button>' +
+            '<input type="range" min="0" max="1" step="0.05" value="1" oninput="setVolume(this.value)"></div>' +
+            '<button class="player-btn" onclick="toggleFullscreen()">⛶</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+      const video = document.getElementById('mainVideo');
+      const player = document.getElementById('customPlayer');
+      const progressBar = document.getElementById('progressBar');
+
+      video.addEventListener('timeupdate', function() {
+        const pct = (video.currentTime / video.duration) * 100 || 0;
+        document.getElementById('progressFill').style.width = pct + '%';
+        document.getElementById('timeDisplay').textContent = formatTime(video.currentTime) + ' / ' + formatTime(video.duration || 0);
+      });
+
+      video.addEventListener('play', function() {
+        player.classList.remove('paused');
+        document.getElementById('playPauseBtn').textContent = '⏸';
+        document.getElementById('bigBtn').textContent = '⏸';
+      });
+
+      video.addEventListener('pause', function() {
+        player.classList.add('paused');
+        document.getElementById('playPauseBtn').textContent = '▶';
+        document.getElementById('bigBtn').textContent = '▶';
+      });
+
+      progressBar.addEventListener('click', function(e) {
+        const rect = progressBar.getBoundingClientRect();
+        const pct = (e.clientX - rect.left) / rect.width;
+        video.currentTime = pct * video.duration;
+      });
+
+      player.addEventListener('click', function(e) {
+        if (e.target.closest('.player-controls')) return;
+        togglePlay();
+      });
+
+      video.play().catch(function(){});
+
     } else if (f.category === 'image') {
       container.style.background = '#111';
-      container.innerHTML = `<img src="${f.url}" style="max-width:100%;max-height:100%;object-fit:contain;" alt="${f.name}">`;
+      container.innerHTML = '<img src="' + f.url + '" style="max-width:100%;max-height:100%;object-fit:contain;" alt="' + f.name + '">';
     } else if (f.category === 'audio') {
-      container.innerHTML = `
-        <div class="video-placeholder">
-          <span>🎵</span>
-          <p>${f.name}</p>
-          <audio src="${f.url}" controls style="margin-top:12px;width:300px;"></audio>
-        </div>`;
+      container.innerHTML = '<div class="video-placeholder"><span>🎵</span><p>' + f.name + '</p><audio src="' + f.url + '" controls style="margin-top:12px;width:300px;"></audio></div>';
     } else {
-      container.innerHTML = `
-        <div class="video-placeholder">
-          <span>${getFileEmoji(f.category)}</span>
-          <p>Preview not available for this file type</p>
-        </div>`;
+      container.innerHTML = '<div class="video-placeholder"><span>' + getFileEmoji(f.category) + '</span><p>Preview not available</p><a href="' + f.url + '" target="_blank" style="color:var(--accent);font-size:13px;margin-top:8px;">Download file</a></div>';
     }
 
     document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function togglePlay() {
+    const video = document.getElementById('mainVideo');
+    if (!video) return;
+    video.paused ? video.play() : video.pause();
+  }
+
+  function skipVideo(secs) {
+    const video = document.getElementById('mainVideo');
+    if (!video) return;
+    video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + secs));
+  }
+
+  function setVolume(val) {
+    const video = document.getElementById('mainVideo');
+    if (video) video.volume = val;
+  }
+
+  function toggleMute() {
+    const video = document.getElementById('mainVideo');
+    if (!video) return;
+    video.muted = !video.muted;
+  }
+
+  function toggleFullscreen() {
+    const player = document.getElementById('customPlayer');
+    if (!player) return;
+    if (document.fullscreenElement) { document.exitFullscreen(); }
+    else { player.requestFullscreen().catch(function(){}); }
   }
 
   function closeModal(e) {
@@ -1233,9 +1435,9 @@
     const f = files.find(x => x.id == id);
     if (!f) return;
     f.shared = true;
-    const shareUrl = `${window.location.origin}/f/${f.share_code || f.id}`;
+    const shareUrl = f.url;
     navigator.clipboard.writeText(shareUrl).catch(() => {});
-    showToast('Link copied: ' + shareUrl);
+    showToast('Link copied to clipboard!');
     updateStats();
   }
 
