@@ -1233,8 +1233,6 @@
     const f = files.find(x => x.id == id);
     if (!f) return;
     f.shared = true;
-    const f = files.find(x => x.id == id);
-    if (!f) return;
     const shareUrl = `${window.location.origin}/f/${f.share_code || f.id}`;
     navigator.clipboard.writeText(shareUrl).catch(() => {});
     showToast('Link copied: ' + shareUrl);
