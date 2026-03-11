@@ -741,32 +741,36 @@
   }
 
   /* Center play button - elegant circle */
-  .cv-center {
+  /* Fade play/pause indicator - shows briefly on click, no persistent button */
+  .cv-fade-icon {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 68px; height: 68px;
+    width: 72px; height: 72px;
     border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.5);
-    background: rgba(0,0,0,0.4);
-    backdrop-filter: blur(8px);
+    background: rgba(0,0,0,0.45);
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    pointer-events: all;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.08s ease;
   }
 
-  .cv-center:hover {
-    border-color: rgba(255,255,255,0.9);
-    background: rgba(0,0,0,0.6);
-    transform: translate(-50%, -50%) scale(1.07);
+  .cv-fade-icon.show {
+    opacity: 1;
+    animation: iconFade 0.55s ease forwards;
   }
 
-  .cv-center svg { width: 26px; height: 26px; fill: white; margin-left: 2px; }
-  .cv-center.playing svg { margin-left: 0; }
+  @keyframes iconFade {
+    0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.7); }
+    20%  { opacity: 1; transform: translate(-50%,-50%) scale(1.05); }
+    60%  { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%,-50%) scale(1); }
+  }
+
+  .cv-fade-icon svg { width: 30px; height: 30px; fill: white; }
 
   /* Bottom gradient controls */
   .cv-bottom {
@@ -1445,7 +1449,7 @@ function buildPlayer(f) {
       '<source src="' + f.url + '" type="' + (f.type||'video/mp4') + '">' +
     '</video>' +
     '<div class="cv-controls" id="cvCtrl">' +
-      '<div class="cv-center" id="cvCenter" onclick="cvTogglePlay()">' +
+      '<div class="cv-fade-icon" id="cvFadeIcon">' +
         '<svg id="cvCenterIco" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>' +
       '</div>' +
       '<div class="cv-speed-menu" id="cvSpeedMenu">' +
@@ -1616,8 +1620,25 @@ function showRipple(player, left, text) {
 
 window.cvTogglePlay = function() {
   const v = document.getElementById('cvVid');
-  if (v) v.paused ? v.play() : v.pause();
+  if (!v) return;
+  v.paused ? v.play() : v.pause();
+  showFadeIcon(!v.paused); // show pause icon if now playing, play if pausing
 };
+
+function showFadeIcon(isNowPlaying) {
+  const icon = document.getElementById('cvFadeIcon');
+  if (!icon) return;
+  // Set icon: pause bars if playing, play triangle if pausing
+  const ico = document.getElementById('cvCenterIco');
+  if (ico) ico.setAttribute('d', isNowPlaying
+    ? 'M6 19h4V5H6v14zm8-14v14h4V5h-4z'  // pause
+    : 'M8 5v14l11-7z'                       // play
+  );
+  icon.classList.remove('show');
+  void icon.offsetWidth; // force reflow
+  icon.classList.add('show');
+  setTimeout(() => icon.classList.remove('show'), 600);
+}
 
 window.cvSkip = function(s) {
   const v = document.getElementById('cvVid');
