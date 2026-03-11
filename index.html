@@ -1605,7 +1605,10 @@ function setPIcon(paused) {
   const pause = 'M6 19h4V5H6v14zm8-14v14h4V5h-4z';
   ['cvPlayIco','cvCenterIco'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.setAttribute('d', paused ? play : pause);
+    if (!el) return;
+    // el could be <svg> or <path> — always get the path
+    const path = el.tagName === 'path' ? el : el.querySelector('path');
+    if (path) path.setAttribute('d', paused ? play : pause);
   });
 }
 
