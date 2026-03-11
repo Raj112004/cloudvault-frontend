@@ -449,31 +449,70 @@
   }
 
   footer a { color: var(--accent); text-decoration: none; }
+
+  /* Speed menu */
+  .speed-menu {
+    position: absolute;
+    bottom: 58px;
+    right: 52px;
+    background: #1a1a1e;
+    border: 1px solid #2a2a32;
+    border-radius: 10px;
+    padding: 6px;
+    min-width: 148px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.6);
+    display: none;
+    z-index: 20;
+  }
+  .speed-menu.open { display: block; }
+  .speed-menu-title {
+    font-size: 9px;
+    font-weight: 700;
+    color: #44444f;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 4px 8px 6px;
+  }
+  .speed-opt {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: #888896;
+    transition: all 0.1s;
+    border: none;
+    background: none;
+    width: 100%;
+    font-family: inherit;
+    text-align: left;
+  }
+  .speed-opt:hover { background: #1e1e22; color: #ededf0; }
+  .speed-opt.active { color: #6c63ff; }
+  .speed-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    border: 1.5px solid #2a2a32;
+    flex-shrink: 0;
+    transition: all 0.1s;
+  }
+  .speed-opt.active .speed-dot { background: #6c63ff; border-color: #6c63ff; }
+
 </style>
 </head>
 <body>
 
 <header>
-  <div><a class="logo" href="https://cloudvault17.netlify.app">Cloud<span>Vault</span></a><div style="font-size:10px;color:#f472b6;font-weight:500;margin-top:1px;">Made by Muskan's Raj ji 💗</div></div>
+  <div><div><a class="logo" href="https://cloudvault17.netlify.app">Cloud<span>Vault</span></a><div style="font-size:10px;color:#f472b6;font-weight:500;margin-top:1px;">Made by Muskan's Raj ji 💗</div></div></div>
 </header>
 
-<div class="page">
-  <div class="file-card" id="fileCard">
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading file...</p>
-    </div>
-  </div>
-</div>
-
-<footer>
-  Shared via <a href="https://cloudvault17.netlify.app">CloudVault</a> — Free file hosting & streaming
-</footer>
 
 <script>
 const BACKEND_URL = 'https://cloudvault-backend-utgb.onrender.com';
 
-// Get share code from URL: /share.html?f=abc123 or /f/abc123
 function getShareCode() {
   const params = new URLSearchParams(window.location.search);
   if (params.get('f')) return params.get('f');
@@ -495,17 +534,35 @@ function fmt(s) {
 }
 
 // ======== VIDEO PLAYER ========
-function buildVideoPlayer(url, type, fileId) {
+function buildVideoPlayer(url, type) {
+  const speeds = ['0.25','0.5','0.75','Normal','1.25','1.5','1.75','2'];
+  const speedOpts = speeds.map(s =>
+    `<button class="speed-opt${s==='Normal'?' active':''}" onclick="setSpeed('${s}',this)">
+      <span class="speed-dot"></span>${s==='Normal'?'Normal':s+'×'}
+    </button>`
+  ).join('');
+
   return `
     <div class="player-wrap" id="playerWrap">
       <video id="vid" preload="metadata" playsinline>
         <source src="${url}" type="${type || 'video/mp4'}">
       </video>
+
       <div class="controls-layer" id="ctrlLayer">
+
+        <!-- Fade icon - no persistent button -->
         <div class="fade-icon" id="fadeIcon">
           <svg id="centerIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
         </div>
+
+        <!-- Speed menu -->
+        <div class="speed-menu" id="speedMenu">
+          <div class="speed-menu-title">Playback Speed</div>
+          ${speedOpts}
+        </div>
+
         <div class="bottom-controls">
+          <!-- Progress bar -->
           <div class="progress-wrap" id="progWrap">
             <div class="progress-track">
               <div class="progress-buf" id="progBuf"></div>
@@ -514,25 +571,48 @@ function buildVideoPlayer(url, type, fileId) {
             <div class="progress-thumb" id="progThumb"></div>
             <div class="time-tooltip" id="timeTip">0:00</div>
           </div>
+
+          <!-- Controls row -->
           <div class="btn-row">
-            <button class="cbtn" id="playBtn" onclick="togglePlay()" title="Play/Pause">
-              <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <!-- Play/pause -->
+            <button class="cbtn" id="playBtn" onclick="togglePlay()" title="Play/Pause (Space)">
+              <svg id="playIcon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
             </button>
-            <button class="cbtn" onclick="skip(-10)" title="Rewind 10s">
-              <svg viewBox="0 0 24 24"><path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6h-2c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8zm-1.1 11h-.85v-3.26l-1.01.31v-.69l1.77-.63h.09V16zm4.28-1.76c0 .32-.03.6-.1.82s-.17.42-.29.57-.28.26-.45.33-.37.1-.59.1-.41-.03-.59-.1-.33-.18-.46-.33-.23-.34-.3-.57-.11-.5-.11-.82v-.74c0-.32.03-.6.1-.82s.17-.42.29-.57.28-.26.45-.33.37-.1.59-.1.41.03.59.1.33.18.46.33.23.34.3.57.11.5.11.82v.74zm-.85-.86c0-.19-.01-.35-.04-.48s-.07-.23-.12-.31-.11-.13-.19-.17-.16-.05-.25-.05-.18.02-.25.05-.14.09-.19.17-.09.18-.12.31-.04.29-.04.48v.97c0 .19.01.35.04.49s.07.24.12.32.11.14.19.17.16.06.25.06.18-.02.25-.06.14-.09.19-.17.09-.19.11-.32.04-.3.04-.49v-.97z"/></svg>
+
+            <!-- Rewind 10s -->
+            <button class="cbtn" onclick="skip(-10)" title="−10s (←)">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
             </button>
-            <button class="cbtn" onclick="skip(10)" title="Forward 10s">
-              <svg viewBox="0 0 24 24"><path d="M18 13c0 3.31-2.69 6-6 6s-6-2.69-6-6 2.69-6 6-6v4l5-5-5-5v4c-4.42 0-8 3.58-8 8s3.58 8 8 8 8-3.58 8-8h-2zm-4.85 3h-.85v-3.26l-1.01.31v-.69l1.77-.63h.09V16zm4.28-1.76c0 .32-.03.6-.1.82s-.17.42-.29.57-.28.26-.45.33-.37.1-.59.1-.41-.03-.59-.1-.33-.18-.46-.33-.23-.34-.3-.57-.11-.5-.11-.82v-.74c0-.32.03-.6.1-.82s.17-.42.29-.57.28-.26.45-.33.37-.1.59-.1.41.03.59.1.33.18.46.33.23.34.3.57.11.5.11.82v.74zm-.85-.86c0-.19-.01-.35-.04-.48s-.07-.23-.12-.31-.11-.13-.19-.17-.16-.05-.25-.05-.18.02-.25.05-.14.09-.19.17-.09.18-.12.31-.04.29-.04.48v.97c0 .19.01.35.04.49s.07.24.12.32.11.14.19.17.16.06.25.06.18-.02.25-.06.14-.09.19-.17.09-.19.11-.32.04-.3.04-.49v-.97z"/></svg>
+
+            <!-- Forward 10s -->
+            <button class="cbtn" onclick="skip(10)" title="+10s (→)">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/></svg>
             </button>
+
+            <!-- Time display -->
             <span class="time-display" id="timeDisp">0:00 / 0:00</span>
+
+            <!-- Volume -->
             <div class="vol-wrap">
-              <button class="cbtn" id="volBtn" onclick="toggleMute()" title="Mute">
-                <svg id="volIcon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+              <button class="cbtn" id="volBtn" onclick="toggleMute()" title="Mute (M)">
+                <svg id="volIcon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
               </button>
               <input class="vol-slider" type="range" min="0" max="1" step="0.02" value="1" oninput="setVol(this.value)" id="volSlider">
             </div>
-            <button class="cbtn" onclick="toggleFS()" title="Fullscreen">
-              <svg id="fsIcon" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+
+            <!-- Speed -->
+            <button class="cbtn" onclick="toggleSpeedMenu()" title="Playback speed">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M20.38 8.57l-1.23 1.85a8 8 0 0 1-.22 7.58H5.07A8 8 0 0 1 15.58 6.85l1.85-1.23A10 10 0 0 0 3.35 19a2 2 0 0 0 1.72 1h13.85a2 2 0 0 0 1.74-1 10 10 0 0 0-.27-10.44zm-9.79 6.84a2 2 0 0 0 2.83 0l5.66-8.49-8.49 5.66a2 2 0 0 0 0 2.83z"/></svg>
+            </button>
+
+            <!-- PiP -->
+            <button class="cbtn" onclick="togglePiP()" title="Picture in Picture">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 1.98 2 1.98h18c1.1 0 2-.88 2-1.98V5c0-1.1-.9-2-2-2zm0 16.01H3V4.98h18v14.03z"/></svg>
+            </button>
+
+            <!-- Fullscreen -->
+            <button class="cbtn" onclick="toggleFS()" title="Fullscreen (F)">
+              <svg id="fsIcon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
             </button>
           </div>
         </div>
@@ -557,13 +637,13 @@ function buildAudioPlayer(url, name) {
         </div>
         <div class="audio-btns">
           <button class="cbtn" onclick="skip(-10)">
-            <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white"><path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6h-2c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+            <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
           </button>
-          <button class="cbtn" id="audioPlayBtn" onclick="togglePlay()" style="width:48px;height:48px;background:var(--accent);border-radius:50%;color:white">
+          <button class="cbtn" id="audioPlayBtn" onclick="togglePlay()" style="width:48px;height:48px;background:#6c63ff;border-radius:50%;color:white">
             <svg id="audioPlayIcon" viewBox="0 0 24 24" style="width:22px;height:22px;fill:white"><path d="M8 5v14l11-7z"/></svg>
           </button>
           <button class="cbtn" onclick="skip(10)">
-            <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white"><path d="M18 13c0 3.31-2.69 6-6 6s-6-2.69-6-6 2.69-6 6-6v4l5-5-5-5v4c-4.42 0-8 3.58-8 8s3.58 8 8 8 8-3.58 8-8h-2z"/></svg>
+            <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/></svg>
           </button>
         </div>
       </div>
@@ -579,17 +659,17 @@ function initPlayer(type) {
   const isVideo = type === 'video';
   const isAudio = type === 'audio';
 
-  // Progress update
+  // Time update
   vid.addEventListener('timeupdate', function() {
     const pct = (vid.currentTime / vid.duration * 100) || 0;
     if (isVideo) {
       document.getElementById('progFill').style.width = pct + '%';
       document.getElementById('progThumb').style.left = pct + '%';
+      document.getElementById('timeDisp').textContent = fmt(vid.currentTime) + ' / ' + fmt(vid.duration);
     } else if (isAudio) {
       document.getElementById('audioFill').style.width = pct + '%';
       document.getElementById('audCurr').textContent = fmt(vid.currentTime);
     }
-    if (isVideo) document.getElementById('timeDisp').textContent = fmt(vid.currentTime) + ' / ' + fmt(vid.duration);
   });
 
   vid.addEventListener('loadedmetadata', function() {
@@ -606,14 +686,14 @@ function initPlayer(type) {
     });
   }
 
-  // Play/pause state
+  // Play/pause icon sync — this is the key fix
   vid.addEventListener('play', function() {
-    setPlayIcon(false);
+    setPlayIcon(false); // playing → show pause icon
     if (isAudio) document.getElementById('audioArt').classList.add('playing');
   });
 
   vid.addEventListener('pause', function() {
-    setPlayIcon(true);
+    setPlayIcon(true); // paused → show play icon
     if (isAudio) document.getElementById('audioArt').classList.remove('playing');
   });
 
@@ -621,7 +701,7 @@ function initPlayer(type) {
     setPlayIcon(true);
   });
 
-  // Progress click seek
+  // Progress seek
   const progEl = document.getElementById(isVideo ? 'progWrap' : 'audioProg');
   if (progEl) {
     progEl.addEventListener('click', function(e) {
@@ -629,7 +709,6 @@ function initPlayer(type) {
       const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
       vid.currentTime = pct * vid.duration;
     });
-
     if (isVideo) {
       progEl.addEventListener('mousemove', function(e) {
         const rect = progEl.getBoundingClientRect();
@@ -641,7 +720,7 @@ function initPlayer(type) {
     }
   }
 
-  // Auto-hide controls (video only)
+  // Auto-hide controls
   if (isVideo) {
     const wrap = document.getElementById('playerWrap');
     const layer = document.getElementById('ctrlLayer');
@@ -659,14 +738,17 @@ function initPlayer(type) {
       }
     }
 
+    // Single click on video area → play/pause + fade icon
+    wrap.addEventListener('click', function(e) {
+      if (e.target.closest('.bottom-controls') || e.target.closest('.speed-menu')) return;
+      togglePlay();
+    });
+
     wrap.addEventListener('mousemove', showCtrl);
     wrap.addEventListener('mouseenter', showCtrl);
     wrap.addEventListener('mouseleave', function() {
       clearTimeout(hideTimer);
-      if (!vid.paused) {
-        layer.classList.remove('visible');
-        wrap.style.cursor = 'none';
-      }
+      if (!vid.paused) { layer.classList.remove('visible'); wrap.style.cursor = 'none'; }
     });
 
     vid.addEventListener('pause', function() {
@@ -682,20 +764,6 @@ function initPlayer(type) {
       }, 2000);
     });
 
-    // Double-tap to seek
-    wrap.addEventListener('dblclick', function(e) {
-      const rect = wrap.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      if (x < rect.width / 3) {
-        skip(-10); showRipple(wrap, 'left', '⏪ 10s');
-      } else if (x > rect.width * 2/3) {
-        skip(10); showRipple(wrap, 'right', '⏩ 10s');
-      } else {
-        togglePlay();
-      }
-    });
-
-    // Show controls initially
     layer.classList.add('visible');
     hideTimer = setTimeout(function() {
       if (!vid.paused) layer.classList.remove('visible');
@@ -706,51 +774,50 @@ function initPlayer(type) {
       if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
       if (e.code === 'ArrowLeft') { e.preventDefault(); skip(-5); }
       if (e.code === 'ArrowRight') { e.preventDefault(); skip(5); }
-      if (e.code === 'ArrowUp') { e.preventDefault(); setVol(Math.min(1, vid.volume + 0.1)); document.getElementById('volSlider').value = vid.volume; }
-      if (e.code === 'ArrowDown') { e.preventDefault(); setVol(Math.max(0, vid.volume - 0.1)); document.getElementById('volSlider').value = vid.volume; }
+      if (e.code === 'ArrowUp') { e.preventDefault(); const v = Math.min(1, vid.volume+0.1); vid.volume=v; document.getElementById('volSlider').value=v; }
+      if (e.code === 'ArrowDown') { e.preventDefault(); const v = Math.max(0, vid.volume-0.1); vid.volume=v; document.getElementById('volSlider').value=v; }
       if (e.code === 'KeyF') { e.preventDefault(); toggleFS(); }
       if (e.code === 'KeyM') { e.preventDefault(); toggleMute(); }
     });
   }
 }
 
+// ======== ICON SYNC (THE FIX) ========
 function setPlayIcon(paused) {
-  const playPath = "M8 5v14l11-7z";
-  const pausePath = "M6 19h4V5H6v14zm8-14v14h4V5h-4z";
-  const icons = ['playIcon', 'centerIcon', 'audioPlayIcon'].filter(id => document.getElementById(id));
-  icons.forEach(id => {
+  const play = 'M8 5v14l11-7z';
+  const pause = 'M6 19h4V5H6v14zm8-14v14h4V5h-4z';
+  // Update ALL play icons at once
+  ['playIcon', 'audioPlayIcon'].forEach(function(id) {
     const el = document.getElementById(id);
-    if (el) el.setAttribute('d', paused ? playPath : pausePath);
+    if (el) {
+      const path = el.tagName === 'path' ? el : el.querySelector('path');
+      if (path) path.setAttribute('d', paused ? play : pause);
+    }
   });
 }
 
-function showRipple(wrap, side, text) {
-  const r = document.createElement('div');
-  r.className = 'ripple';
-  r.style.left = side === 'left' ? '18%' : '82%';
-  r.innerHTML = '<div class="ripple-circle">' + text + '</div>';
-  wrap.appendChild(r);
-  setTimeout(() => r.remove(), 700);
+// ======== FADE ICON ON CLICK ========
+function showFadeIcon(nowPlaying) {
+  const icon = document.getElementById('fadeIcon');
+  const path = icon && icon.querySelector('path');
+  if (!icon || !path) return;
+  path.setAttribute('d', nowPlaying
+    ? 'M6 19h4V5H6v14zm8-14v14h4V5h-4z'
+    : 'M8 5v14l11-7z'
+  );
+  icon.classList.remove('show');
+  void icon.offsetWidth;
+  icon.classList.add('show');
+  setTimeout(() => icon.classList.remove('show'), 600);
 }
 
+// ======== CONTROLS ========
 window.togglePlay = function() {
   const vid = document.getElementById('vid');
   if (!vid) return;
   const wasPaused = vid.paused;
   wasPaused ? vid.play() : vid.pause();
-  // Show fade icon
-  const icon = document.getElementById('fadeIcon');
-  const path = document.querySelector('#centerIcon path');
-  if (icon && path) {
-    path.setAttribute('d', wasPaused
-      ? 'M6 19h4V5H6v14zm8-14v14h4V5h-4z'  // now playing → show pause
-      : 'M8 5v14l11-7z'                       // now paused → show play
-    );
-    icon.classList.remove('show');
-    void icon.offsetWidth;
-    icon.classList.add('show');
-    setTimeout(() => icon.classList.remove('show'), 600);
-  }
+  showFadeIcon(wasPaused); // wasPaused=true means now playing → show pause
 };
 
 window.skip = function(s) {
@@ -761,56 +828,81 @@ window.skip = function(s) {
 
 window.setVol = function(v) {
   const vid = document.getElementById('vid');
-  if (vid) { vid.volume = v; vid.muted = v == 0; updateVolIcon(v > 0); }
+  if (vid) { vid.volume = parseFloat(v); vid.muted = v == 0; updateVolIcon(v > 0); }
 };
 
 window.toggleMute = function() {
   const vid = document.getElementById('vid');
   if (!vid) return;
   vid.muted = !vid.muted;
-  const slider = document.getElementById('volSlider');
-  if (slider) slider.value = vid.muted ? 0 : vid.volume;
+  const sl = document.getElementById('volSlider');
+  if (sl) sl.value = vid.muted ? 0 : vid.volume;
   updateVolIcon(!vid.muted);
 };
 
 function updateVolIcon(unmuted) {
-  const icon = document.getElementById('volIcon');
-  if (!icon) return;
-  icon.setAttribute('d', unmuted
+  const el = document.getElementById('volIcon');
+  if (!el) return;
+  const p = el.querySelector('path');
+  if (p) p.setAttribute('d', unmuted
     ? 'M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z'
     : 'M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z'
   );
 }
 
+window.toggleSpeedMenu = function() {
+  const menu = document.getElementById('speedMenu');
+  if (menu) menu.classList.toggle('open');
+};
+
+window.setSpeed = function(val, btn) {
+  const vid = document.getElementById('vid');
+  if (!vid) return;
+  vid.playbackRate = val === 'Normal' ? 1 : parseFloat(val);
+  document.querySelectorAll('.speed-opt').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('speedMenu').classList.remove('open');
+};
+
+window.togglePiP = async function() {
+  const vid = document.getElementById('vid');
+  if (!vid) return;
+  try {
+    if (document.pictureInPictureElement) await document.exitPictureInPicture();
+    else await vid.requestPictureInPicture();
+  } catch(e) {}
+};
+
 window.toggleFS = function() {
   const el = document.getElementById('playerWrap') || document.documentElement;
-  if (!document.fullscreenElement) {
-    el.requestFullscreen && el.requestFullscreen();
-  } else {
-    document.exitFullscreen && document.exitFullscreen();
-  }
+  if (!document.fullscreenElement) el.requestFullscreen && el.requestFullscreen();
+  else document.exitFullscreen && document.exitFullscreen();
 };
+
+// Close speed menu on outside click
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.speed-menu') && !e.target.closest('.cbtn')) {
+    const m = document.getElementById('speedMenu');
+    if (m) m.classList.remove('open');
+  }
+});
 
 // ======== LOAD FILE ========
 async function loadFile() {
   const code = getShareCode();
   const card = document.getElementById('fileCard');
-
   if (!code || code === 'share.html') {
     card.innerHTML = '<div class="error-state"><span style="font-size:48px">🔗</span><p>No file specified</p></div>';
     return;
   }
-
   try {
     const res = await fetch(BACKEND_URL + '/files');
     const files = await res.json();
     const file = files.find(f => f.share_code === code || f.id === code);
-
     if (!file) {
       card.innerHTML = '<div class="error-state"><span style="font-size:48px">❌</span><p>File not found or link expired</p></div>';
       return;
     }
-
     document.title = file.name + ' — CloudVault';
     const url = file.public_url;
     const cat = file.category;
@@ -818,15 +910,10 @@ async function loadFile() {
     const size = formatSize(file.size);
 
     let mediaHtml = '';
-    if (cat === 'video') {
-      mediaHtml = buildVideoPlayer(url, file.type, file.id);
-    } else if (cat === 'audio') {
-      mediaHtml = buildAudioPlayer(url, file.name);
-    } else if (cat === 'image') {
-      mediaHtml = '<div class="player-wrap" style="background:#0a0a0c"><img src="' + url + '" alt="' + file.name + '"></div>';
-    } else {
-      mediaHtml = '<div class="player-wrap" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;color:#888"><span style="font-size:56px">📄</span><p style="font-size:14px">No preview available</p></div>';
-    }
+    if (cat === 'video') mediaHtml = buildVideoPlayer(url, file.type);
+    else if (cat === 'audio') mediaHtml = buildAudioPlayer(url, file.name);
+    else if (cat === 'image') mediaHtml = '<div class="player-wrap" style="background:#0a0a0c"><img src="' + url + '" alt="' + file.name + '"></div>';
+    else mediaHtml = '<div class="player-wrap" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;color:#888"><span style="font-size:56px">📄</span><p style="font-size:14px">No preview available</p></div>';
 
     card.innerHTML = mediaHtml + `
       <div class="file-info-bar">
@@ -842,8 +929,7 @@ async function loadFile() {
       </div>`;
 
     initPlayer(cat);
-
-  } catch (err) {
+  } catch(err) {
     card.innerHTML = '<div class="error-state"><span style="font-size:48px">⚠️</span><p>Failed to load file. Try again later.</p></div>';
   }
 }
