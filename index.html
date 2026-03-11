@@ -509,17 +509,20 @@
 
   .file-card:hover .card-menu-btn { opacity: 1; }
 
+  /* Portal dropdown — fixed to viewport so it's never clipped */
   .card-dropdown {
-    position: absolute;
-    top: 32px; right: 2px;
+    position: fixed;
     background: #1a1a1e;
     border: 1px solid var(--border2);
     border-radius: 10px;
     padding: 5px;
-    z-index: 200;
-    min-width: 160px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+    z-index: 9999;
+    min-width: 168px;
+    box-shadow: 0 10px 36px rgba(0,0,0,0.75);
     display: none;
+  }
+  .card-dropdown.open {
+    display: block;
     animation: fadeUp 0.15s ease;
   }
 
@@ -1368,8 +1371,13 @@ function renderFiles() {
     return;
   }
 
+  // Remove any previously portal'd menus
+  document.querySelectorAll('.card-dropdown').forEach(m => m.remove());
+
   if (currentView === 'grid') {
     area.innerHTML = '<div class="file-grid">' + filtered.map((f,i) => renderCard(f,i)).join('') + '</div>';
+    // Portal all dropdowns to body so they escape overflow/stacking context
+    document.querySelectorAll('#fileArea .card-dropdown').forEach(m => document.body.appendChild(m));
   } else {
     area.innerHTML = '<div class="file-list"><div class="list-header"><div></div><div>Name</div><div>Type</div><div>Size</div><div>Date</div><div>Actions</div></div>' + filtered.map((f,i) => renderRow(f,i)).join('') + '</div>';
   }
@@ -1387,11 +1395,9 @@ function renderCard(f, i) {
       (f.category==='video'||f.category==='image' ? '<div class="play-overlay"><div class="play-btn">' + (f.category==='video'?'▶':'🔍') + '</div></div>' : '') +
       '<span class="file-type-badge">' + f.ext + '</span>' +
       '<button class="card-menu-btn" onclick="event.stopPropagation();toggleMenu(\'' + f.id + '\',this)">⋯</button>' +
-      '<div class="card-dropdown" id="menu-' + f.id + '">' +
+      '<div class="card-dropdown" id="menu-' + f.id + '" data-id="' + f.id + '">' +
         '<button class="dropdown-item" onclick="event.stopPropagation();shareFile(\'' + f.id + '\');closeAllMenus()"><span class="di">🔗</span>Copy share link</button>' +
-        '<button class="dropdown-item" onclick="event.stopPropagation();copyDirectLink(\'' + f.id + '\');closeAllMenus()"><span class="di">📋</span>Copy direct link</button>' +
         '<button class="dropdown-item" onclick="event.stopPropagation();downloadFile(\'' + f.id + '\');closeAllMenus()"><span class="di">↓</span>Download</button>' +
-        '<button class="dropdown-item" onclick="event.stopPropagation();openFile(\'' + f.id + '\');closeAllMenus()"><span class="di">▶</span>Preview</button>' +
         '<button class="dropdown-item danger" onclick="event.stopPropagation();deleteFile(\'' + f.id + '\');closeAllMenus()"><span class="di">🗑</span>Delete</button>' +
       '</div>' +
     '</div>' +
@@ -1421,7 +1427,18 @@ function renderRow(f, i) {
 function toggleMenu(id, btn) {
   closeAllMenus();
   const menu = document.getElementById('menu-' + id);
-  if (menu) menu.classList.toggle('open');
+  if (!menu) return;
+  // Position fixed relative to button
+  const rect = btn.getBoundingClientRect();
+  const menuW = 168;
+  let left = rect.right - menuW;
+  if (left < 8) left = 8;
+  let top = rect.bottom + 4;
+  // If too close to bottom, flip up
+  if (top + 150 > window.innerHeight) top = rect.top - 150;
+  menu.style.left = left + 'px';
+  menu.style.top = top + 'px';
+  menu.classList.add('open');
 }
 
 function closeAllMenus() {
