@@ -97,37 +97,34 @@
   }
 
   /* Center play button */
-  .center-btn {
+  /* Fade icon - appears briefly on play/pause click, then vanishes */
+  .fade-icon {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) scale(0.9);
-    width: 72px;
-    height: 72px;
+    transform: translate(-50%, -50%);
+    width: 72px; height: 72px;
     border-radius: 50%;
-    background: rgba(0,0,0,0.55);
-    border: 2.5px solid rgba(255,255,255,0.7);
-    backdrop-filter: blur(6px);
+    background: rgba(0,0,0,0.42);
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    transition: transform 0.18s ease, background 0.18s ease, opacity 0.35s ease;
-    pointer-events: all;
+    pointer-events: none;
     opacity: 0;
   }
 
-  .controls-layer.visible .center-btn {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+  .fade-icon.show {
+    animation: iconFade 0.55s ease forwards;
   }
 
-  .center-btn:hover {
-    background: rgba(0,0,0,0.75);
-    transform: translate(-50%, -50%) scale(1.08) !important;
+  @keyframes iconFade {
+    0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.7); }
+    20%  { opacity: 1; transform: translate(-50%,-50%) scale(1.05); }
+    60%  { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%,-50%) scale(1); }
   }
 
-  .center-btn svg { width: 28px; height: 28px; fill: white; }
+  .fade-icon svg { width: 30px; height: 30px; fill: white; }
 
   /* Bottom gradient + controls */
   .bottom-controls {
@@ -505,9 +502,9 @@ function buildVideoPlayer(url, type, fileId) {
         <source src="${url}" type="${type || 'video/mp4'}">
       </video>
       <div class="controls-layer" id="ctrlLayer">
-        <button class="center-btn" id="centerBtn" onclick="togglePlay()">
+        <div class="fade-icon" id="fadeIcon">
           <svg id="centerIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-        </button>
+        </div>
         <div class="bottom-controls">
           <div class="progress-wrap" id="progWrap">
             <div class="progress-track">
@@ -739,7 +736,21 @@ function showRipple(wrap, side, text) {
 window.togglePlay = function() {
   const vid = document.getElementById('vid');
   if (!vid) return;
-  vid.paused ? vid.play() : vid.pause();
+  const wasPaused = vid.paused;
+  wasPaused ? vid.play() : vid.pause();
+  // Show fade icon
+  const icon = document.getElementById('fadeIcon');
+  const path = document.querySelector('#centerIcon path');
+  if (icon && path) {
+    path.setAttribute('d', wasPaused
+      ? 'M6 19h4V5H6v14zm8-14v14h4V5h-4z'  // now playing → show pause
+      : 'M8 5v14l11-7z'                       // now paused → show play
+    );
+    icon.classList.remove('show');
+    void icon.offsetWidth;
+    icon.classList.add('show');
+    setTimeout(() => icon.classList.remove('show'), 600);
+  }
 };
 
 window.skip = function(s) {
