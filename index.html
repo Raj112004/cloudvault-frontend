@@ -414,7 +414,7 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 12px;
-    overflow: hidden;
+    overflow: visible;
     cursor: pointer;
     transition: all 0.15s;
     animation: fadeUp 0.3s ease both;
@@ -442,6 +442,7 @@
     font-size: 30px;
     position: relative;
     overflow: hidden;
+    border-radius: 12px 12px 0 0;
   }
 
   .file-thumb video, .file-thumb img {
@@ -510,14 +511,14 @@
 
   .card-dropdown {
     position: absolute;
-    top: 36px; right: 6px;
+    top: 32px; right: 2px;
     background: #1a1a1e;
     border: 1px solid var(--border2);
     border-radius: 10px;
     padding: 5px;
-    z-index: 50;
-    min-width: 150px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    z-index: 200;
+    min-width: 160px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.7);
     display: none;
     animation: fadeUp 0.15s ease;
   }
@@ -1572,14 +1573,10 @@ function initPlayer() {
     tip.textContent = fmtTime(pct * vid.duration);
   });
 
-  // Double click seek/play
-  player.addEventListener('dblclick', e => {
+  // Single click = play/pause with fade icon
+  player.addEventListener('click', e => {
     if (e.target.closest('.cv-bottom') || e.target.closest('.cv-speed-menu')) return;
-    const rect = player.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    if (x < rect.width / 3) { cvSkip(-10); showRipple(player, '16%', '⏪'); }
-    else if (x > rect.width * 2/3) { cvSkip(10); showRipple(player, '84%', '⏩'); }
-    else cvTogglePlay();
+    cvTogglePlay();
   });
 
   // Keyboard shortcuts
