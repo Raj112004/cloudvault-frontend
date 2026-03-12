@@ -1397,6 +1397,7 @@ favicon: True
       <span class="icon">📊</span> File Analytics
     </div>
 
+    <div class="sidebar-label" style="margin-top:8px;">Storage</div>
     <div class="storage-widget">
       <div class="storage-label">
         <span>Storage</span>
@@ -1498,10 +1499,22 @@ let searchQuery = '';
 
 // ========== LOAD FILES ==========
 async function loadFiles() {
-  try {
-    const res = await fetch(BACKEND_URL + '/files');
-    const data = await res.json();
-    files = data.map(f => ({
+  // Show waking up message (Render free tier sleeps)
+  const area = document.getElementById('fileArea');
+  if (area) area.innerHTML = '<div class="empty-state"><span style="font-size:32px;animation:heartbeat 1s infinite;">☁</span><h3 style="margin-top:12px;">Connecting to CloudVault...</h3><p>Waking up server, please wait up to 30s</p></div>';
+  
+  let attempts = 0;
+  const maxAttempts = 3;
+  
+  while (attempts < maxAttempts) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 55000); // 55s timeout for Render wake
+      const res = await fetch(BACKEND_URL + '/files', { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!res.ok) throw new Error('Server returned ' + res.status);
+      const data = await res.json();
+      files = data.map(f => ({
       id: f.id,
       name: f.name,
       size: f.size,
@@ -1514,9 +1527,20 @@ async function loadFiles() {
       shared: !!f.share_code,
       share_code: f.share_code
     }));
-    renderFiles();
-    updateStats();
-  } catch(e) { console.error('Load failed', e); }
+      renderFiles();
+      updateStats();
+      return; // success
+    } catch(e) {
+      attempts++;
+      if (attempts < maxAttempts) {
+        if (area) area.innerHTML = '<div class="empty-state"><span style="font-size:32px;">⏳</span><h3 style="margin-top:12px;">Retrying... (' + attempts + '/' + maxAttempts + ')</h3><p>Server is waking up</p></div>';
+        await new Promise(r => setTimeout(r, 3000));
+      } else {
+        if (area) area.innerHTML = '<div class="empty-state"><span style="font-size:32px;">⚠️</span><h3 style="margin-top:12px;">Could not connect</h3><p style="margin-bottom:16px;">Server may be starting up. Wait 30 seconds and try again.</p><button class="btn btn-primary" onclick="loadFiles()" style="margin:0 auto;">↺ Retry</button></div>';
+        console.error('Load failed after ' + maxAttempts + ' attempts', e);
+      }
+    }
+  }
 }
 
 // ========== STATS ==========
@@ -2218,42 +2242,73 @@ window.deleteFile = function(id) {
     document.getElementById('welcomeOverlay').style.display = 'none';
     return;
   }
+
   const canvas = document.getElementById('confettiCanvas');
   const ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  const colors = ['#6c63ff','#f472b6','#60a5fa','#a78bfa','#f9a8d4','#818cf8','#fbbf24'];
-  const pieces = Array.from({length: 120}, () => ({
-    x: Math.random() * canvas.width,
-    y: -20 - Math.random() * 200,
-    w: 8 + Math.random() * 10,
-    h: 4 + Math.random() * 6,
-    color: colors[Math.floor(Math.random() * colors.length)],
-    vx: (Math.random() - 0.5) * 3,
-    vy: 2 + Math.random() * 4,
-    rot: Math.random() * 360,
-    vrot: (Math.random() - 0.5) * 8,
-    opacity: 1
-  }));
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const colors = ['#6c63ff','#f472b6','#60a5fa','#a78bfa','#f9a8d4','#818cf8','#fbbf24','#34d399','#fb923c'];
+  const shapes = ['rect','circle','ribbon'];
+  let pieces = [];
   let running = true;
+
+  function burst(cx, cy, count) {
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.random() * Math.PI * 2);
+      const speed = 4 + Math.random() * 14;
+      pieces.push({
+        x: cx, y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - (Math.random() * 6),
+        w: 7 + Math.random() * 9,
+        h: 4 + Math.random() * 5,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        shape: shapes[Math.floor(Math.random() * shapes.length)],
+        rot: Math.random() * 360,
+        vrot: (Math.random() - 0.5) * 12,
+        gravity: 0.25 + Math.random() * 0.2,
+        opacity: 1,
+        fade: 0.008 + Math.random() * 0.006
+      });
+    }
+  }
+
+  // Multiple bursts: center + corners
+  setTimeout(() => burst(canvas.width/2, canvas.height/2, 120), 0);
+  setTimeout(() => burst(canvas.width*0.2, canvas.height*0.3, 60), 200);
+  setTimeout(() => burst(canvas.width*0.8, canvas.height*0.3, 60), 350);
+  setTimeout(() => burst(canvas.width/2, canvas.height*0.6, 80), 500);
+
   function draw() {
     if (!running) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces = pieces.filter(p => p.opacity > 0);
     pieces.forEach(p => {
-      p.x += p.vx; p.y += p.vy; p.rot += p.vrot;
-      if (p.y > canvas.height) { p.y = -20; p.x = Math.random() * canvas.width; }
+      p.vy += p.gravity;
+      p.x += p.vx; p.y += p.vy;
+      p.vx *= 0.98;
+      p.rot += p.vrot;
+      p.opacity -= p.fade;
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(p.rot * Math.PI / 180);
       ctx.fillStyle = p.color;
-      ctx.globalAlpha = p.opacity;
-      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.globalAlpha = Math.max(0, p.opacity);
+      if (p.shape === 'circle') {
+        ctx.beginPath(); ctx.arc(0, 0, p.w/2, 0, Math.PI*2); ctx.fill();
+      } else if (p.shape === 'ribbon') {
+        ctx.fillRect(-p.w/2, -p.h/4, p.w, p.h/2);
+      } else {
+        ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      }
       ctx.restore();
     });
     requestAnimationFrame(draw);
   }
   draw();
-  window._stopConfetti = () => { running = false; };
+  window._stopConfetti = () => { running = false; ctx.clearRect(0,0,canvas.width,canvas.height); };
 })();
 
 function closeWelcome() {
@@ -2566,9 +2621,9 @@ loadFiles();
   <canvas id="confettiCanvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></canvas>
   <div id="welcomeCard" style="position:relative;text-align:center;padding:40px 48px;background:linear-gradient(135deg,rgba(108,99,255,0.15),rgba(244,114,182,0.15));border:1px solid rgba(108,99,255,0.3);border-radius:24px;max-width:380px;animation:welcomePop 0.7s cubic-bezier(0.34,1.56,0.64,1);">
     <div style="font-size:56px;margin-bottom:12px;animation:heartbeat 1.2s ease-in-out infinite;">💗</div>
-    <h1 style="font-size:28px;font-weight:700;background:linear-gradient(135deg,#60a5fa,#818cf8,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;">Welcome</h1>
-    <h2 style="font-size:22px;font-weight:600;background:linear-gradient(135deg,#f472b6,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px;">mera Mukku 🥰💗</h2>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:28px;">Your personal cloud vault is ready ✨</p>
+    <h1 style="font-size:28px;font-weight:700;background:linear-gradient(135deg,#60a5fa,#818cf8,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;">Welcome ✨</h1>
+    <h2 style="font-size:22px;font-weight:600;margin-bottom:16px;"><span style="background:linear-gradient(135deg,#f472b6,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Mera Mukku</span>&nbsp;<span style="color:white;">🥰💗</span></h2>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:28px;">Your personal cloud vault is ready 💫</p>
     <button onclick="closeWelcome()" style="background:linear-gradient(135deg,#6c63ff,#f472b6);border:none;color:white;font-family:inherit;font-size:14px;font-weight:600;padding:12px 32px;border-radius:99px;cursor:pointer;animation:pulse 2s ease-in-out infinite;">Let me in 💕</button>
   </div>
 </div>
