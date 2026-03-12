@@ -1,4 +1,3 @@
-favicon: True
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1256,6 +1255,7 @@ favicon: True
     0%,100% { box-shadow: 0 0 0 0 rgba(108,99,255,0.4); }
     50%      { box-shadow: 0 0 0 12px rgba(108,99,255,0); }
   }
+  @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes confettiFall {
     to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
   }
@@ -1499,47 +1499,32 @@ let searchQuery = '';
 
 // ========== LOAD FILES ==========
 async function loadFiles() {
-  // Show waking up message (Render free tier sleeps)
   const area = document.getElementById('fileArea');
-  if (area) area.innerHTML = '<div class="empty-state"><span style="font-size:32px;animation:heartbeat 1s infinite;">☁</span><h3 style="margin-top:12px;">Connecting to CloudVault...</h3><p>Waking up server, please wait up to 30s</p></div>';
-  
-  let attempts = 0;
-  const maxAttempts = 3;
-  
-  while (attempts < maxAttempts) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 55000); // 55s timeout for Render wake
-      const res = await fetch(BACKEND_URL + '/files', { signal: controller.signal });
-      clearTimeout(timeout);
-      if (!res.ok) throw new Error('Server returned ' + res.status);
-      const data = await res.json();
-      files = data.map(f => ({
+  if (area) area.innerHTML = '<div class="empty-state"><span style="font-size:36px;display:inline-block;animation:spin 1.2s linear infinite;">⏳</span><h3 style="margin-top:14px;">Loading your files...</h3><p>If this takes long, Render server is waking up (up to 50s)</p></div>';
+
+  try {
+    const res = await fetch(BACKEND_URL + '/files');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    files = data.map(f => ({
       id: f.id,
       name: f.name,
       size: f.size,
       type: f.type,
-      ext: f.name.split('.').pop() || '',
+      ext: f.name.split('.').pop().toLowerCase() || '',
       category: f.category,
       url: f.public_url,
       date: new Date(f.created_at),
       views: f.views || 0,
+      downloads: f.downloads || 0,
       shared: !!f.share_code,
       share_code: f.share_code
     }));
-      renderFiles();
-      updateStats();
-      return; // success
-    } catch(e) {
-      attempts++;
-      if (attempts < maxAttempts) {
-        if (area) area.innerHTML = '<div class="empty-state"><span style="font-size:32px;">⏳</span><h3 style="margin-top:12px;">Retrying... (' + attempts + '/' + maxAttempts + ')</h3><p>Server is waking up</p></div>';
-        await new Promise(r => setTimeout(r, 3000));
-      } else {
-        if (area) area.innerHTML = '<div class="empty-state"><span style="font-size:32px;">⚠️</span><h3 style="margin-top:12px;">Could not connect</h3><p style="margin-bottom:16px;">Server may be starting up. Wait 30 seconds and try again.</p><button class="btn btn-primary" onclick="loadFiles()" style="margin:0 auto;">↺ Retry</button></div>';
-        console.error('Load failed after ' + maxAttempts + ' attempts', e);
-      }
-    }
+    renderFiles();
+    updateStats();
+  } catch(e) {
+    console.error('loadFiles error:', e);
+    if (area) area.innerHTML = '<div class="empty-state"><span style="font-size:32px;">⚠️</span><h3 style="margin-top:12px;">Could not connect to server</h3><p style="margin-bottom:16px;max-width:280px;">The server may still be waking up.<br>Wait 30 seconds then tap Retry.</p><button class="btn btn-primary" onclick="loadFiles()" style="margin:0 auto;padding:10px 24px;">↺ Retry</button></div>';
   }
 }
 
