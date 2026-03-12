@@ -2223,12 +2223,15 @@ window.deleteFile = function(id) {
 
 // ===== WELCOME CONFETTI =====
 (function() {
+  const overlay = document.getElementById('welcomeOverlay');
+  if (!overlay) return;
   if (sessionStorage.getItem('cv_welcomed')) {
-    document.getElementById('welcomeOverlay').style.display = 'none';
+    overlay.style.display = 'none';
     return;
   }
 
   const canvas = document.getElementById('confettiCanvas');
+  if (!canvas) return;
   const ctx = canvas.getContext('2d');
   function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
   resize();
@@ -2300,9 +2303,10 @@ function closeWelcome() {
   sessionStorage.setItem('cv_welcomed', '1');
   if (window._stopConfetti) window._stopConfetti();
   const ov = document.getElementById('welcomeOverlay');
+  if (!ov) return;
   ov.style.transition = 'opacity 0.6s';
   ov.style.opacity = '0';
-  setTimeout(() => ov.style.display = 'none', 600);
+  setTimeout(() => { if (ov) ov.style.display = 'none'; }, 600);
 }
 
 // ===== ANALYTICS =====
