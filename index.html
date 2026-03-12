@@ -1,9 +1,11 @@
+favicon: True
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CloudVault — Store. Share. Stream.</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%236c63ff'/><stop offset='100%25' stop-color='%23f472b6'/></linearGradient></defs><rect width='100' height='100' rx='20' fill='url(%23g)'/><text y='.9em' font-size='70' x='15'>☁</text></svg>" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -74,8 +76,11 @@
 
   .logo-tagline {
     font-size: 10px;
-    color: var(--pink);
-    font-weight: 500;
+    background: linear-gradient(90deg, #60a5fa, #818cf8, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 600;
     letter-spacing: 0.02em;
     padding-left: 39px;
   }
@@ -1238,6 +1243,90 @@
     header { padding: 12px 14px; }
   }
 
+  /* ===== WELCOME ANIMATIONS ===== */
+  @keyframes welcomePop {
+    from { transform: scale(0.5) translateY(40px); opacity: 0; }
+    to   { transform: scale(1) translateY(0);      opacity: 1; }
+  }
+  @keyframes heartbeat {
+    0%,100% { transform: scale(1); }
+    50%      { transform: scale(1.18); }
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(108,99,255,0.4); }
+    50%      { box-shadow: 0 0 0 12px rgba(108,99,255,0); }
+  }
+  @keyframes confettiFall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ===== IMAGE ZOOM IN MODAL ===== */
+  #imgZoomControls { display: flex; }
+  .zoomable-img {
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+    transform-origin: center;
+    transition: transform 0.2s;
+    cursor: zoom-in;
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* ===== CARD MENU BTN always visible ===== */
+  .card-menu-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 2px 6px;
+    line-height: 1;
+    transition: all 0.15s;
+  }
+  .card-menu-btn:hover {
+    background: var(--border2);
+    color: var(--text);
+  }
+
+  /* ===== ANALYTICS FILE ROW ===== */
+  .a-file-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .a-file-row:last-child { border-bottom: none; }
+  .a-file-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text);
+    margin-right: 12px;
+  }
+  .a-file-stats {
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
+    color: var(--text3);
+  }
+  .a-file-stats span { display: flex; align-items: center; gap: 3px; }
+
+  /* ===== VISIBILITY BADGE ===== */
+  .visibility-badge {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 99px;
+    font-weight: 600;
+    margin-left: 4px;
+  }
+  .badge-private { background: rgba(239,68,68,0.15); color: var(--red); }
+  .badge-public  { background: rgba(34,197,94,0.15);  color: var(--green); }
+
 </style>
 </head>
 <body>
@@ -1262,10 +1351,7 @@
       <div class="logo-tagline">Made by Muskan's Raj ji 💗</div>
     </div>
   </div>
-  <nav>
-    <button class="active" onclick="switchTab(this,'files')">Files</button>
-    <button onclick="switchTab(this,'shared')">Shared</button>
-  </nav>
+
   <div style="display:flex;align-items:center;gap:8px;">
     <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">↑ Upload</button>
     <button class="hamburger" style="display:flex;" onclick="openSettings()" title="Settings">
@@ -1302,9 +1388,13 @@
       <span class="icon">🎵</span> Audio
       <span class="sidebar-count" id="cnt-audio">0</span>
     </div>
-    <div class="sidebar-item" onclick="filterFiles('archive',this)">
-      <span class="icon">📦</span> Archives
-      <span class="sidebar-count" id="cnt-archive">0</span>
+    <div class="sidebar-item" onclick="filterFiles('shared',this)" id="sidebarShared">
+      <span class="icon">🔗</span> Shared
+      <span class="sidebar-count" id="cnt-shared">0</span>
+    </div>
+    <div class="sidebar-label" style="margin-top:8px;">Analytics</div>
+    <div class="sidebar-item" onclick="openAnalytics()">
+      <span class="icon">📊</span> File Analytics
     </div>
 
     <div class="storage-widget">
@@ -1320,24 +1410,11 @@
   </aside>
 
   <main>
-    <div class="stats-bar">
-      <div class="stat-item">
-        <div class="stat-value" id="statTotal">0</div>
-        <div class="stat-label">Total Files</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value" id="statSize">0 B</div>
-        <div class="stat-label">Storage Used</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value" id="statShared">0</div>
-        <div class="stat-label">Shared Links</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value" id="statViews">0</div>
-        <div class="stat-label">Total Views</div>
-      </div>
-    </div>
+<!-- hidden stat trackers -->
+<span id="statTotal" style="display:none">0</span>
+<span id="statSize" style="display:none">0</span>
+<span id="statShared" style="display:none">0</span>
+<span id="statViews" style="display:none">0</span>
 
     <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
       <span class="drop-icon">☁</span>
@@ -1389,6 +1466,12 @@
     <div class="modal-footer">
       <div class="modal-file-info" id="modalInfo">—</div>
       <div class="modal-actions">
+        <div id="imgZoomControls" style="display:none;gap:6px;align-items:center;">
+          <button class="btn btn-ghost" onclick="imgZoom(-0.2)" title="Zoom out">−</button>
+          <span id="imgZoomPct" style="font-size:11px;color:var(--text2);min-width:36px;text-align:center;">100%</span>
+          <button class="btn btn-ghost" onclick="imgZoom(0.2)" title="Zoom in">+</button>
+          <button class="btn btn-ghost" onclick="imgZoomReset()" title="Reset">⟳</button>
+        </div>
         <button class="btn btn-ghost" onclick="shareCurrentFile()">🔗 Copy Link</button>
         <button class="btn btn-primary" onclick="downloadCurrentFile()">↓ Download</button>
       </div>
@@ -1401,7 +1484,7 @@
   <span id="toastMsg">Done!</span>
 </div>
 
-<div class="branding">Made by Muskan's Raj ji <span class="heart">💗</span> — CloudVault</div>
+<div class="branding"><span style="background:linear-gradient(90deg,#60a5fa,#818cf8,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700;">Made by Muskan's Raj ji 💗 — CloudVault</span></div>
 
 <script>
 const BACKEND_URL = 'https://cloudvault-backend-utgb.onrender.com';
@@ -1466,12 +1549,14 @@ function updateStats() {
   document.getElementById('storeDetail').textContent = formatSize(totalSize) + ' of 10 GB used';
 
   // Sidebar counts
-  const cats = ['video','image','document','audio','archive'];
+  const cats = ['video','image','document','audio'];
   document.getElementById('cnt-all').textContent = files.length;
-  cats.forEach(c => {
-    const el = document.getElementById('cnt-' + c);
-    if (el) el.textContent = files.filter(f => f.category === c).length;
+  cats.forEach(cat => {
+    const el = document.getElementById('cnt-' + cat);
+    if (el) el.textContent = files.filter(f => f.category === cat).length;
   });
+  const sharedEl = document.getElementById('cnt-shared');
+  if (sharedEl) sharedEl.textContent = files.filter(f => f.shared).length;
 }
 
 // ========== FILE EMOJI ==========
@@ -1498,18 +1583,25 @@ async function handleFiles(fileList) {
       const formData = new FormData();
       formData.append('file', f);
 
-      let p = 0;
-      const iv = setInterval(() => {
-        p = Math.min(p + 4, 88);
-        bar.style.width = p + '%';
-        pct.textContent = Math.round(p) + '%';
-      }, 200);
-
-      const res = await fetch(BACKEND_URL + '/upload', { method: 'POST', body: formData });
-      clearInterval(iv);
-      bar.style.width = '100%'; pct.textContent = '100%';
-
-      const data = await res.json();
+      // Real XHR upload with actual progress
+      const data = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', BACKEND_URL + '/upload');
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const p = Math.round((e.loaded / e.total) * 92);
+            bar.style.width = p + '%';
+            pct.textContent = p + '%';
+          }
+        };
+        xhr.onload = () => {
+          bar.style.width = '100%'; pct.textContent = '100%';
+          try { resolve(JSON.parse(xhr.responseText)); }
+          catch(e) { reject(e); }
+        };
+        xhr.onerror = () => reject(new Error('Network error'));
+        xhr.send(formData);
+      });
       if (data.success) {
         files.unshift({
           id: data.file.id,
@@ -1537,7 +1629,10 @@ async function handleFiles(fileList) {
 
 // ========== RENDER ==========
 function getFilteredFiles() {
-  let f = currentFilter === 'all' ? files : files.filter(x => x.category === currentFilter);
+  let f;
+  if (currentFilter === 'all') f = files;
+  else if (currentFilter === 'shared') f = files.filter(x => x.shared);
+  else f = files.filter(x => x.category === currentFilter);
   if (searchQuery) f = f.filter(x => x.name.toLowerCase().includes(searchQuery.toLowerCase()));
   return f;
 }
@@ -1573,17 +1668,22 @@ function renderCard(f, i) {
   return '<div class="file-card" style="animation-delay:' + delay + 's" onclick="openFile(\'' + f.id + '\')">' +
     '<div class="file-thumb">' +
       thumb +
-      (f.category==='video'||f.category==='image' ? '<div class="play-overlay"><div class="play-btn">' + (f.category==='video'?'▶':'🔍') + '</div></div>' : '') +
+      (f.category==='video'||f.category==='image' ? (f.category==='video' ? '<div class="play-overlay"><div class="play-btn">▶</div></div>' : '') : '') +
       '<span class="file-type-badge">' + f.ext + '</span>' +
-      '<button class="card-menu-btn" onclick="event.stopPropagation();toggleMenu(\'' + f.id + '\',this)">⋯</button>' +
+      '' +
       '<div class="card-dropdown" id="menu-' + f.id + '" data-id="' + f.id + '">' +
+        '<button class="dropdown-item" onclick="event.stopPropagation();renameFile(\'' + f.id + '\');closeAllMenus()"><span class="di">✏️</span>Rename</button>' +
+        '<button class="dropdown-item" onclick="event.stopPropagation();toggleVisibility(\'' + f.id + '\');closeAllMenus()"><span class="di" id="vis-icon-' + f.id + '">' + (f.shared ? '🔒' : '🌐') + '</span><span id="vis-label-' + f.id + '">' + (f.shared ? 'Make Private' : 'Make Public') + '</span></button>' +
         '<button class="dropdown-item" onclick="event.stopPropagation();shareFile(\'' + f.id + '\');closeAllMenus()"><span class="di">🔗</span>Copy share link</button>' +
         '<button class="dropdown-item" onclick="event.stopPropagation();downloadFile(\'' + f.id + '\');closeAllMenus()"><span class="di">↓</span>Download</button>' +
         '<button class="dropdown-item danger" onclick="event.stopPropagation();deleteFile(\'' + f.id + '\');closeAllMenus()"><span class="di">🗑</span>Delete</button>' +
       '</div>' +
     '</div>' +
     '<div class="file-info">' +
-      '<div class="file-name" title="' + f.name + '">' + f.name + '</div>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">' +
+        '<div class="file-name" title="' + f.name + '">' + f.name + '</div>' +
+        '<button class="card-menu-btn" style="position:static;opacity:1;flex-shrink:0;" onclick="event.stopPropagation();toggleMenu(\'' + f.id + '\',this)">⋯</button>' +
+      '</div>' +
       '<div class="file-meta"><span>' + formatSize(f.size) + '</span><span>' + formatDate(f.date).split(',')[0] + '</span></div>' +
     '</div>' +
   '</div>';
@@ -2107,17 +2207,166 @@ function applyStoredSettings() {
 applyStoredSettings();
 
 // deleteFile with confirm support (replaces the function above)
-window.deleteFile = async function(id) {
-  if (getSetting('confirmDelete', true)) {
-    const f = files.find(x => x.id == id);
-    if (f && !confirm('Delete "' + f.name + '"?')) return;
+window.deleteFile = function(id) {
+  openDeleteDialog(id);
+};
+
+
+// ===== WELCOME CONFETTI =====
+(function() {
+  if (sessionStorage.getItem('cv_welcomed')) {
+    document.getElementById('welcomeOverlay').style.display = 'none';
+    return;
   }
-  try { await fetch(BACKEND_URL + '/files/' + id, { method: 'DELETE' }); } catch(e){}
-  files = files.filter(x => x.id != id);
-  closeAllMenus();
+  const canvas = document.getElementById('confettiCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const colors = ['#6c63ff','#f472b6','#60a5fa','#a78bfa','#f9a8d4','#818cf8','#fbbf24'];
+  const pieces = Array.from({length: 120}, () => ({
+    x: Math.random() * canvas.width,
+    y: -20 - Math.random() * 200,
+    w: 8 + Math.random() * 10,
+    h: 4 + Math.random() * 6,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    vx: (Math.random() - 0.5) * 3,
+    vy: 2 + Math.random() * 4,
+    rot: Math.random() * 360,
+    vrot: (Math.random() - 0.5) * 8,
+    opacity: 1
+  }));
+  let running = true;
+  function draw() {
+    if (!running) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.rot += p.vrot;
+      if (p.y > canvas.height) { p.y = -20; p.x = Math.random() * canvas.width; }
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.opacity;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+  window._stopConfetti = () => { running = false; };
+})();
+
+function closeWelcome() {
+  sessionStorage.setItem('cv_welcomed', '1');
+  if (window._stopConfetti) window._stopConfetti();
+  const ov = document.getElementById('welcomeOverlay');
+  ov.style.transition = 'opacity 0.6s';
+  ov.style.opacity = '0';
+  setTimeout(() => ov.style.display = 'none', 600);
+}
+
+// ===== ANALYTICS =====
+function openAnalytics() {
+  document.getElementById('aStat1').textContent = files.length;
+  document.getElementById('aStat2').textContent = formatSize(files.reduce((a,f)=>a+f.size,0));
+  document.getElementById('aStat3').textContent = files.filter(f=>f.shared).length;
+  document.getElementById('aStat4').textContent = files.reduce((a,f)=>a+(f.views||0),0);
+  const list = document.getElementById('analyticsFileList');
+  if (!files.length) { list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text3);">No files yet</div>'; }
+  else {
+    list.innerHTML = files.map(f =>
+      '<div class="a-file-row">' +
+        '<span style="margin-right:8px;">' + getFileEmoji(f.category) + '</span>' +
+        '<span class="a-file-name">' + f.name + '</span>' +
+        '<div class="a-file-stats">' +
+          '<span>👁 ' + (f.views||0) + '</span>' +
+          '<span>↓ ' + (f.downloads||0) + '</span>' +
+          '<span>' + formatSize(f.size) + '</span>' +
+        '</div>' +
+      '</div>'
+    ).join('');
+  }
+  document.getElementById('analyticsOverlay').classList.add('open');
+  if (window.innerWidth <= 768) closeSidebar();
+}
+function closeAnalytics() { document.getElementById('analyticsOverlay').classList.remove('open'); }
+function closeAnalyticsOverlay(e) { if (e.target===document.getElementById('analyticsOverlay')) closeAnalytics(); }
+
+// ===== RENAME =====
+let _renameId = null;
+function renameFile(id) {
+  _renameId = id;
+  const f = files.find(x=>x.id==id);
+  if (!f) return;
+  document.getElementById('renameInput').value = f.name;
+  document.getElementById('renameOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('renameInput').focus(), 100);
+}
+function closeRename() { document.getElementById('renameOverlay').classList.remove('open'); _renameId = null; }
+function closeRenameOverlay(e) { if (e.target===document.getElementById('renameOverlay')) closeRename(); }
+async function confirmRename() {
+  const newName = document.getElementById('renameInput').value.trim();
+  if (!newName || !_renameId) return;
+  const f = files.find(x=>x.id==_renameId);
+  if (f) { f.name = newName; renderFiles(); updateStats(); showToast('Renamed to: ' + newName); }
+  closeRename();
+}
+
+// ===== DELETE DIALOG (in-page, not browser confirm) =====
+let _deleteId = null;
+function openDeleteDialog(id) {
+  _deleteId = id;
+  const f = files.find(x=>x.id==id);
+  document.getElementById('deleteMsg').textContent = 'Delete "' + (f ? f.name : 'this file') + '"? This cannot be undone.';
+  document.getElementById('deleteOverlay').classList.add('open');
+}
+function closeDeleteDialog() { document.getElementById('deleteOverlay').classList.remove('open'); _deleteId = null; }
+function closeDeleteOverlay(e) { if (e.target===document.getElementById('deleteOverlay')) closeDeleteDialog(); }
+async function confirmDelete() {
+  if (!_deleteId) return;
+  closeDeleteDialog();
+  try { await fetch(BACKEND_URL + '/files/' + _deleteId, { method: 'DELETE' }); } catch(e){}
+  files = files.filter(x => x.id != _deleteId);
   renderFiles(); updateStats();
   showToast('File deleted');
+  _deleteId = null;
+}
+
+// ===== VISIBILITY TOGGLE =====
+async function toggleVisibility(id) {
+  const f = files.find(x=>x.id==id);
+  if (!f) return;
+  f.shared = !f.shared;
+  renderFiles();
+  showToast(f.shared ? '🌐 File is now Public' : '🔒 File is now Private');
+}
+
+// ===== IMAGE ZOOM =====
+let _imgScale = 1;
+function imgZoom(delta) {
+  _imgScale = Math.min(4, Math.max(0.2, _imgScale + delta));
+  const img = document.querySelector('.zoomable-img');
+  if (img) img.style.transform = 'scale(' + _imgScale + ')';
+  document.getElementById('imgZoomPct').textContent = Math.round(_imgScale * 100) + '%';
+  img.style.cursor = _imgScale > 1 ? 'zoom-out' : 'zoom-in';
+}
+function imgZoomReset() {
+  _imgScale = 1;
+  const img = document.querySelector('.zoomable-img');
+  if (img) { img.style.transform = 'scale(1)'; img.style.cursor = 'zoom-in'; }
+  document.getElementById('imgZoomPct').textContent = '100%';
+}
+
+// ===== UPDATE filterFiles to handle 'shared' =====
+const _origFilterFiles = filterFiles;
+window.filterFiles = function(cat, el) {
+  currentFilter = cat;
+  document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderFiles();
 };
+
+// ===== UPDATE getFilteredFiles to handle 'shared' =====
 
 loadFiles();
 </script>
@@ -2249,6 +2498,78 @@ loadFiles();
         <div style="color:var(--pink);margin-top:4px;">Made by Muskan's Raj ji 💗</div>
       </div>
     </div>
+  </div>
+</div>
+
+
+<!-- ANALYTICS MODAL -->
+<div class="settings-overlay" id="analyticsOverlay" onclick="closeAnalyticsOverlay(event)">
+  <div class="settings-modal" onclick="event.stopPropagation()">
+    <div class="settings-header">
+      <h2>📊 Analytics</h2>
+      <button class="modal-close" onclick="closeAnalytics()">✕</button>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">Overview</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:4px 0;">
+        <div style="background:var(--surface2);border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--accent)" id="aStat1">—</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px;">Total Files</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--pink)" id="aStat2">0 B</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px;">Storage Used</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--green)" id="aStat3">0</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px;">Shared Links</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--accent2)" id="aStat4">0</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px;">Total Views</div>
+        </div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">Per File Traffic</div>
+      <div id="analyticsFileList" style="max-height:320px;overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RENAME DIALOG -->
+<div class="settings-overlay" id="renameOverlay" onclick="closeRenameOverlay(event)">
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:24px;width:100%;max-width:340px;" onclick="event.stopPropagation()">
+    <h3 style="font-size:15px;margin-bottom:16px;">✏️ Rename File</h3>
+    <input id="renameInput" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;padding:10px 12px;outline:none;margin-bottom:16px;" placeholder="New filename">
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeRename()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmRename()">Rename</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM DIALOG -->
+<div class="settings-overlay" id="deleteOverlay" onclick="closeDeleteOverlay(event)">
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:24px;width:100%;max-width:320px;" onclick="event.stopPropagation()">
+    <h3 style="font-size:15px;margin-bottom:8px;">🗑 Delete File</h3>
+    <p id="deleteMsg" style="font-size:13px;color:var(--text2);margin-bottom:20px;">Are you sure?</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeDeleteDialog()">Cancel</button>
+      <button class="btn" style="background:var(--red);color:white;padding:8px 16px;border-radius:8px;border:none;font-family:inherit;cursor:pointer;" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- WELCOME CONFETTI -->
+<div id="welcomeOverlay" style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);">
+  <canvas id="confettiCanvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></canvas>
+  <div id="welcomeCard" style="position:relative;text-align:center;padding:40px 48px;background:linear-gradient(135deg,rgba(108,99,255,0.15),rgba(244,114,182,0.15));border:1px solid rgba(108,99,255,0.3);border-radius:24px;max-width:380px;animation:welcomePop 0.7s cubic-bezier(0.34,1.56,0.64,1);">
+    <div style="font-size:56px;margin-bottom:12px;animation:heartbeat 1.2s ease-in-out infinite;">💗</div>
+    <h1 style="font-size:28px;font-weight:700;background:linear-gradient(135deg,#60a5fa,#818cf8,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;">Welcome</h1>
+    <h2 style="font-size:22px;font-weight:600;background:linear-gradient(135deg,#f472b6,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px;">mera Mukku 🥰💗</h2>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:28px;">Your personal cloud vault is ready ✨</p>
+    <button onclick="closeWelcome()" style="background:linear-gradient(135deg,#6c63ff,#f472b6);border:none;color:white;font-family:inherit;font-size:14px;font-weight:600;padding:12px 32px;border-radius:99px;cursor:pointer;animation:pulse 2s ease-in-out infinite;">Let me in 💕</button>
   </div>
 </div>
 
