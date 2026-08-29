@@ -208,7 +208,7 @@
   .view-toggle button { background: none; border: none; padding: 6px 10px; cursor: pointer; color: var(--text3); font-size: 13px; }
   .view-toggle button.active { background: var(--surface2); color: var(--text); }
 
-  /* 2-COLUMN RESPONSIVE FILE GRID */
+  /* RESPONSIVE FILE GRID */
   .file-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -371,7 +371,6 @@
     display: flex; flex-direction: column; gap: 6px;
   }
 
-  /* Timeline */
   .cv-prog-wrap { position: relative; height: 14px; display: flex; align-items: center; cursor: pointer; }
   .cv-prog-track { position: absolute; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.25); border-radius: 2px; }
   .cv-prog-buf { position: absolute; height: 100%; width: 0%; background: rgba(255,255,255,0.4); border-radius: 2px; }
@@ -726,8 +725,7 @@ function handleFiles(fileList) {
     if (bar) bar.style.width = '0%';
     if (pct) pct.textContent = '0%';
 
-    var tempLocalUrl = URL.createObjectURL(f);
-
+    var tempBlobUrl = URL.createObjectURL(f);
     var formData = new FormData();
     formData.append('file', f);
 
@@ -753,7 +751,7 @@ function handleFiles(fileList) {
             type: data.file.type,
             ext: data.file.name.split('.').pop() || '',
             category: data.file.category,
-            url: tempLocalUrl,
+            url: data.file.public_url || tempBlobUrl,
             date: new Date(data.file.created_at),
             views: 0,
             shared: false,
@@ -807,16 +805,20 @@ function renderFiles() {
   document.querySelectorAll('#fileArea .card-dropdown').forEach(function(m) { document.body.appendChild(m); });
 }
 
-function handleImgError(img) {
+function handleImgError(img, id) {
   img.onerror = null;
-  img.style.display = 'none';
-  var parent = img.parentElement;
-  if (parent) {
-    var span = document.createElement('span');
-    span.style.fontSize = '28px';
-    span.textContent = '🖼';
-    parent.appendChild(span);
-  }
+  // Attempt to refresh thumbnail with direct backend endpoint
+  img.src = BACKEND_URL + '/files';
+  img.onerror = function() {
+    img.style.display = 'none';
+    var parent = img.parentElement;
+    if (parent) {
+      var span = document.createElement('span');
+      span.style.fontSize = '28px';
+      span.textContent = '🖼';
+      parent.appendChild(span);
+    }
+  };
 }
 
 function renderCard(f, i) {
@@ -826,7 +828,7 @@ function renderCard(f, i) {
   if (f.category === 'video') {
     thumb = '<video src="' + f.url + '" muted preload="metadata" onloadedmetadata="this.currentTime=1"></video>';
   } else if (f.category === 'image') {
-    thumb = '<img src="' + f.url + '" alt="' + f.name + '" loading="lazy" onerror="handleImgError(this)">';
+    thumb = '<img src="' + f.url + '" alt="' + f.name + '" loading="lazy" onerror="handleImgError(this, \'' + f.id + '\')">';
   }
 
   return '<div class="file-card" onclick="openFile(\'' + f.id + '\')">' +
