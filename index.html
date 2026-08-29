@@ -491,29 +491,22 @@
     letter-spacing: 0.05em;
   }
 
-  /* Three-dot menu on card */
   .card-menu-btn {
-    position: absolute;
-    top: 6px; right: 6px;
-    width: 26px; height: 26px;
-    background: rgba(0,0,0,0.72);
-    backdrop-filter: blur(6px);
-    border: none;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
     border-radius: 6px;
-    color: white;
-    font-size: 14px;
+    color: var(--text2);
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.15s;
-    z-index: 5;
+    font-size: 16px;
+    padding: 2px 6px;
+    line-height: 1;
+    transition: all 0.15s;
+  }
+  .card-menu-btn:hover {
+    background: var(--border2);
+    color: var(--text);
   }
 
-  .file-card:hover .card-menu-btn { opacity: 1; }
-
-  /* Portal dropdown — fixed to viewport so it's never clipped */
   .card-dropdown {
     position: fixed;
     background: #1a1a1e;
@@ -1258,22 +1251,6 @@
     margin: 0 auto;
   }
 
-  .card-menu-btn {
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    border-radius: 6px;
-    color: var(--text2);
-    cursor: pointer;
-    font-size: 16px;
-    padding: 2px 6px;
-    line-height: 1;
-    transition: all 0.15s;
-  }
-  .card-menu-btn:hover {
-    background: var(--border2);
-    color: var(--text);
-  }
-
   .a-file-row {
     display: flex;
     align-items: center;
@@ -1717,7 +1694,7 @@ function fmtTime(s) {
 
 function buildPlayer(f) {
   return '<div class="cv-player" id="cvPlayer">' +
-    '<video id="cvVid" preload="metadata" playsinline webkit-playsinline>' +
+    '<video id="cvVid" preload="auto" playsinline webkit-playsinline>' +
       '<source src="' + f.url + '" type="' + (f.type||'video/mp4') + '">' +
     '</video>' +
     '<div class="cv-controls" id="cvCtrl">' +
@@ -1780,10 +1757,11 @@ function initPlayer() {
   const prog = document.getElementById('cvProg');
   if (!vid) return;
 
-  // Set configured default volume
   const defaultVol = parseFloat(getSetting('volume', '1'));
-  vid.volume = defaultVol;
+  vid.defaultMuted = false;
   vid.muted = false;
+  vid.volume = defaultVol;
+  
   const volSlider = document.getElementById('cvVol');
   if (volSlider) volSlider.value = defaultVol;
 
@@ -1869,11 +1847,15 @@ function initPlayer() {
 
   ctrl.classList.add('visible');
 
-  // Attempt unmuted autoplay, fallback to muted if mobile policy blocks it
-  vid.play().catch(() => {
-    vid.muted = true;
-    vid.play().catch(()=>{});
-  });
+  // Attempt standard audio playback; if mobile browser policy blocks autoplay, pause and show user prompt
+  const playPromise = vid.play();
+  if (playPromise !== undefined) {
+    playPromise.catch(() => {
+      vid.pause();
+      setPIcon(true);
+      showToast('▶ Tap anywhere on screen to play with sound');
+    });
+  }
 }
 
 function setPIcon(paused) {
@@ -1890,10 +1872,21 @@ function setPIcon(paused) {
 window.cvTogglePlay = function() {
   const v = document.getElementById('cvVid');
   if (!v) return;
-  // Ensure unmuting on direct user interaction
+  
   if (v.muted) v.muted = false;
-  v.paused ? v.play() : v.pause();
-  showFadeIcon(!v.paused);
+  
+  if (v.paused) {
+    v.play().then(() => {
+      showFadeIcon(true);
+    }).catch(() => {
+      v.muted = false;
+      v.play();
+      showFadeIcon(true);
+    });
+  } else {
+    v.pause();
+    showFadeIcon(false);
+  }
 };
 
 function showFadeIcon(isNowPlaying) {
@@ -1935,8 +1928,15 @@ window.cvSetVol = function(val) {
 window.cvToggleMute = function() {
   const v = document.getElementById('cvVid');
   if (!v) return;
-  v.muted = !v.muted;
-  const targetVal = v.muted ? 0 : (v.volume > 0 ? v.volume : 1);
+  
+  if (v.muted || v.volume === 0) {
+    v.muted = false;
+    v.volume = 1.0;
+  } else {
+    v.muted = true;
+  }
+  
+  const targetVal = v.muted ? 0 : v.volume;
   const sl = document.getElementById('cvVol');
   if (sl) sl.value = targetVal;
   cvSetVol(targetVal);
@@ -2052,7 +2052,6 @@ async function downloadFile(id) {
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
   } catch(e) {
-    // Direct fallback
     const a = document.createElement('a');
     a.href = f.url;
     a.download = f.name;
