@@ -21,6 +21,8 @@
     --pink: #f472b6;
     --green: #22c55e;
     --red: #ef4444;
+    --player-yellow: #f5c518;
+    --player-cyan: #00d2ff;
   }
 
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -82,29 +84,6 @@
     font-weight: 600;
     letter-spacing: 0.02em;
     padding-left: 39px;
-  }
-
-  nav {
-    display: flex;
-    gap: 2px;
-  }
-
-  nav button {
-    background: none;
-    border: none;
-    color: var(--text2);
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 7px 14px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-
-  nav button:hover, nav button.active {
-    background: var(--surface2);
-    color: var(--text);
   }
 
   .btn {
@@ -250,37 +229,6 @@
 
   /* MAIN */
   main { padding: 24px 28px; overflow-y: auto; }
-
-  /* STATS */
-  .stats-bar {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    margin-bottom: 22px;
-  }
-
-  .stat-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 14px 16px;
-    border-radius: 12px;
-  }
-
-  .stat-value {
-    font-size: 20px;
-    font-weight: 700;
-    font-family: 'DM Mono', monospace;
-    letter-spacing: -0.5px;
-    margin-bottom: 2px;
-  }
-
-  .stat-label {
-    font-size: 10px;
-    color: var(--text3);
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    font-weight: 600;
-  }
 
   /* DROP ZONE */
   .drop-zone {
@@ -638,7 +586,7 @@
     border: 1px solid var(--border2);
     border-radius: 16px;
     width: 100%;
-    max-width: 860px;
+    max-width: 900px;
     overflow: hidden;
     animation: scaleIn 0.22s cubic-bezier(0.34,1.56,0.64,1);
   }
@@ -709,18 +657,64 @@
   .video-placeholder span { font-size: 44px; }
   .video-placeholder p { font-size: 12px; }
 
-  /* ============= PLAYER ============= */
+  /* ==========================================================================
+     PRO CINEMA STREAM PLAYER (Vidstream / Zoro Inspired)
+     ========================================================================== */
   .cv-player {
     position: relative;
     width: 100%; height: 100%;
     background: #000;
     overflow: hidden;
+    user-select: none;
   }
 
   .cv-player video {
     width: 100%; height: 100%;
     object-fit: contain;
     display: block;
+  }
+
+  /* Center Play Triangle */
+  .cv-center-play-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 5;
+    transition: opacity 0.2s ease;
+  }
+  .cv-center-play-btn {
+    width: 76px;
+    height: 76px;
+    background: rgba(255, 255, 255, 0.9);
+    clip-path: polygon(25% 15%, 25% 85%, 85% 50%);
+    filter: drop-shadow(0 6px 20px rgba(0,0,0,0.6));
+    transition: transform 0.2s, opacity 0.2s;
+  }
+  .cv-player.playing .cv-center-play-overlay {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Video Subtitles Overlay */
+  .cv-subtitles-box {
+    position: absolute;
+    bottom: 65px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    pointer-events: none;
+    z-index: 10;
+    max-width: 85%;
+    font-size: 18px;
+    font-family: Arial, sans-serif;
+    color: #ffffff;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 4px 12px;
+    border-radius: 4px;
+    display: none;
   }
 
   .cv-controls {
@@ -730,8 +724,9 @@
     flex-direction: column;
     justify-content: flex-end;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.25s ease;
     pointer-events: none;
+    z-index: 15;
   }
 
   .cv-controls.visible {
@@ -739,49 +734,18 @@
     pointer-events: all;
   }
 
-  .cv-fade-icon {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 72px; height: 72px;
-    border-radius: 50%;
-    background: rgba(0,0,0,0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.08s ease;
-  }
-
-  .cv-fade-icon.show {
-    opacity: 1;
-    animation: iconFade 0.55s ease forwards;
-  }
-
-  @keyframes iconFade {
-    0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.7); }
-    20%  { opacity: 1; transform: translate(-50%,-50%) scale(1.05); }
-    60%  { opacity: 1; transform: translate(-50%,-50%) scale(1); }
-    100% { opacity: 0; transform: translate(-50%,-50%) scale(1); }
-  }
-
-  .cv-fade-icon svg { width: 30px; height: 30px; fill: white; }
-
-  /* Bottom gradient controls */
   .cv-bottom {
-    background: linear-gradient(0deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.6) 50%, transparent 100%);
-    padding: 36px 16px 12px;
+    background: linear-gradient(0deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 60%, transparent 100%);
+    padding: 30px 16px 12px;
     display: flex;
     flex-direction: column;
-    gap: 9px;
+    gap: 8px;
   }
 
-  /* Progress bar */
+  /* Sleek Timeline */
   .cv-prog-wrap {
     position: relative;
-    height: 20px;
+    height: 16px;
     display: flex;
     align-items: center;
     cursor: pointer;
@@ -791,10 +755,10 @@
     position: absolute;
     left: 0; right: 0;
     height: 3px;
-    background: rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.22);
     border-radius: 2px;
     overflow: visible;
-    transition: height 0.15s;
+    transition: height 0.12s ease;
   }
 
   .cv-prog-wrap:hover .cv-prog-track { height: 5px; }
@@ -802,7 +766,7 @@
   .cv-prog-buf {
     position: absolute;
     height: 100%; width: 0%;
-    background: rgba(255,255,255,0.28);
+    background: rgba(255,255,255,0.38);
     border-radius: 2px;
     pointer-events: none;
   }
@@ -810,36 +774,34 @@
   .cv-prog-fill {
     position: absolute;
     height: 100%; width: 0%;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    border-radius: 2px;
+    background: var(--player-yellow);
+    border-radius: 2px 0 0 2px;
     pointer-events: none;
   }
 
-  .cv-prog-thumb {
+  /* Cyan Marker/Tip */
+  .cv-prog-fill::after {
+    content: '';
     position: absolute;
-    width: 13px; height: 13px;
-    background: white;
-    border-radius: 50%;
-    top: 50%;
-    left: 0%;
-    transform: translate(-50%, -50%) scale(0);
-    pointer-events: none;
-    transition: transform 0.15s;
-    box-shadow: 0 1px 5px rgba(0,0,0,0.5);
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background: var(--player-cyan);
+    box-shadow: 0 0 8px var(--player-cyan);
   }
-
-  .cv-prog-wrap:hover .cv-prog-thumb { transform: translate(-50%, -50%) scale(1); }
 
   .cv-time-tip {
     position: absolute;
     bottom: 22px;
     transform: translateX(-50%);
-    background: rgba(0,0,0,0.82);
-    color: white;
+    background: #111;
+    color: #fff;
     font-size: 11px;
     font-family: 'DM Mono', monospace;
-    padding: 3px 8px;
-    border-radius: 5px;
+    padding: 3px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--border2);
     pointer-events: none;
     opacity: 0;
     white-space: nowrap;
@@ -848,155 +810,244 @@
 
   .cv-prog-wrap:hover .cv-time-tip { opacity: 1; }
 
-  /* Button row */
+  /* Controls Action Bar */
   .cv-btn-row {
     display: flex;
     align-items: center;
-    gap: 2px;
+    justify-content: space-between;
+  }
+
+  .cv-btn-group-left, .cv-btn-group-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
   .cv-btn {
     background: none;
     border: none;
-    color: rgba(255,255,255,0.85);
+    color: rgba(255,255,255,0.88);
     cursor: pointer;
-    padding: 5px 7px;
-    border-radius: 7px;
+    padding: 6px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color 0.15s, background 0.15s;
+    transition: color 0.15s, background 0.15s, transform 0.1s;
   }
 
-  .cv-btn:hover { color: white; background: rgba(255,255,255,0.1); }
-  .cv-btn svg { width: 18px; height: 18px; fill: currentColor; }
+  .cv-btn:hover { color: #fff; background: rgba(255,255,255,0.12); }
+  .cv-btn:active { transform: scale(0.94); }
+  .cv-btn svg { width: 19px; height: 19px; fill: currentColor; }
 
   .cv-time {
-    font-size: 11px;
-    color: rgba(255,255,255,0.75);
+    font-size: 12px;
+    color: rgba(255,255,255,0.85);
     font-family: 'DM Mono', monospace;
-    flex: 1;
-    padding: 0 6px;
+    padding-left: 4px;
+    white-space: nowrap;
   }
 
-  .cv-vol-wrap {
+  /* Badge Skip Icons (10s) */
+  .cv-skip-badge {
     display: flex;
     align-items: center;
-    gap: 4px;
-  }
-
-  .cv-vol-slider {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 68px; height: 3px;
-    border-radius: 2px;
-    background: rgba(255,255,255,0.25);
-    outline: none;
-    cursor: pointer;
-  }
-
-  .cv-vol-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    background: white;
-    cursor: pointer;
-  }
-
-  /* Speed menu */
-  .cv-speed-menu {
-    position: absolute;
-    bottom: 54px;
-    right: 60px;
-    background: #1c1c20;
-    border: 1px solid var(--border2);
-    border-radius: 10px;
-    padding: 6px;
-    min-width: 130px;
-    box-shadow: 0 8px 28px rgba(0,0,0,0.6);
-    display: none;
-    z-index: 10;
-  }
-
-  .cv-speed-menu.open { display: block; }
-
-  .speed-title {
+    justify-content: center;
+    position: relative;
     font-size: 10px;
+    font-family: 'DM Mono', monospace;
     font-weight: 700;
-    color: var(--text3);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    padding: 4px 8px 6px;
   }
-
-  .speed-opt {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 10px;
-    border-radius: 7px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text2);
-    transition: all 0.1s;
-    border: none;
-    background: none;
-    width: 100%;
-    font-family: inherit;
-    text-align: left;
-  }
-
-  .speed-opt:hover { background: var(--surface2); color: var(--text); }
-  .speed-opt.active { color: var(--accent); }
-
-  .speed-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    border: 1.5px solid var(--border2);
-    flex-shrink: 0;
-  }
-
-  .speed-opt.active .speed-dot {
-    background: var(--accent);
-    border-color: var(--accent);
-  }
-
-  .cv-pip-label {
+  .cv-skip-badge svg { width: 22px; height: 22px; }
+  .cv-skip-badge span {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: rgba(255,255,255,0.5);
-    font-size: 13px;
-    pointer-events: none;
-    display: none;
-  }
-
-  .cv-ripple {
-    position: absolute;
-    top: 50%;
-    pointer-events: none;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    top: 52%;
     transform: translateY(-50%);
   }
 
-  .cv-ripple-circle {
-    width: 72px; height: 72px;
-    background: rgba(255,255,255,0.12);
-    border-radius: 50%;
+  .cv-cc-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    border: 1.5px solid currentColor;
+    padding: 1px 4px;
+    border-radius: 4px;
+    line-height: 1;
+    margin: 0 2px;
+  }
+  .cv-cc-btn.active {
+    background: #fff;
+    color: #000 !important;
+  }
+
+  /* ==========================================================================
+     PRO STREAM SETTINGS POPUP MODAL (Matching Uploaded Screenshots)
+     ========================================================================== */
+  .cv-pro-settings-modal {
+    position: absolute;
+    bottom: 58px;
+    right: 14px;
+    width: 290px;
+    background: #18181c;
+    border: 1px solid #282830;
+    border-radius: 8px;
+    box-shadow: 0 12px 36px rgba(0,0,0,0.85);
+    z-index: 30;
+    display: none;
+    overflow: hidden;
+    animation: scaleIn 0.18s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  .cv-pro-settings-modal.open { display: block; }
+
+  .cv-set-tabs {
+    display: flex;
+    align-items: center;
+    background: #121215;
+    border-bottom: 1px solid #25252c;
+    padding: 2px 4px;
+  }
+
+  .cv-set-tab {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #858594;
+    padding: 10px 0;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
-    color: white;
-    animation: rippleAnim 0.55s ease forwards;
+    position: relative;
+    transition: color 0.15s;
+  }
+  .cv-set-tab:hover { color: #fff; }
+  .cv-set-tab.active { color: #fff; }
+  .cv-set-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 20%;
+    right: 20%;
+    height: 2.5px;
+    background: #fff;
+    border-radius: 2px 2px 0 0;
+  }
+  .cv-set-tab svg { width: 17px; height: 17px; fill: currentColor; }
+
+  .cv-set-close {
+    background: none;
+    border: none;
+    color: #858594;
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cv-set-close:hover { color: #fff; }
+
+  .cv-set-content {
+    padding: 10px 0;
+    max-height: 240px;
+    overflow-y: auto;
   }
 
-  @keyframes rippleAnim {
-    0% { opacity:1; transform: scale(0.5); }
-    100% { opacity:0; transform: scale(1.6); }
+  .cv-set-pane { display: none; }
+  .cv-set-pane.active { display: block; }
+
+  .cv-pane-item {
+    display: flex;
+    align-items: center;
+    padding: 9px 18px;
+    font-size: 13px;
+    color: #c4c4d0;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+  }
+  .cv-pane-item:hover {
+    background: #222228;
+    color: #fff;
+  }
+  .cv-pane-item.selected {
+    color: #fff;
+    font-weight: 600;
+  }
+  .cv-pane-item.selected::before {
+    content: '•';
+    margin-right: 8px;
+    font-size: 16px;
+    line-height: 1;
   }
 
+  /* Subtitle Settings nested page */
+  .cv-sub-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px 10px;
+    border-bottom: 1px solid #25252c;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+  }
+  .cv-sub-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    font-size: 12px;
+    color: #a0a0b0;
+    cursor: pointer;
+  }
+  .cv-sub-row:hover { background: #222228; color: #fff; }
+  .cv-sub-row span:last-child { color: #fff; }
+
+  /* Volume Boost Slider View */
+  .cv-boost-box {
+    padding: 14px 18px;
+  }
+  .cv-boost-title {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 14px;
+  }
+  .cv-boost-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: #33333d;
+    outline: none;
+    cursor: pointer;
+  }
+  .cv-boost-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  }
+  .cv-boost-ticks {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    color: #727282;
+    margin-top: 8px;
+  }
+
+  /* modal footer */
   .modal-footer {
     padding: 12px 18px;
     display: flex;
@@ -1051,8 +1102,6 @@
     color: var(--text3);
     border-top: 1px solid var(--border);
   }
-
-  .branding .heart { color: var(--pink); }
 
   .hamburger {
     display: none;
@@ -1212,32 +1261,28 @@
 
   @media (max-width: 768px) {
     .hamburger { display: flex; align-items: center; justify-content: center; }
-    nav { display: none; }
     .layout { grid-template-columns: 1fr; }
     aside { display: none; flex-direction: column; }
     main { padding: 14px; }
-    .stats-bar { grid-template-columns: repeat(2,1fr); }
     .file-grid { grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); }
     header { padding: 12px 14px; }
+    .cv-pro-settings-modal {
+      width: 92%;
+      right: 4%;
+      bottom: 60px;
+    }
   }
 
   /* ===== WELCOME ANIMATIONS ===== */
   @keyframes welcomePop {
-    from { transform: scale(0.5) translateY(40px); opacity: 0; }
+    from { transform: scale(0.6) translateY(30px); opacity: 0; }
     to   { transform: scale(1) translateY(0);      opacity: 1; }
   }
-  @keyframes heartbeat {
-    0%,100% { transform: scale(1); }
-    50%      { transform: scale(1.18); }
-  }
   @keyframes pulse {
-    0%,100% { box-shadow: 0 0 0 0 rgba(108,99,255,0.4); }
-    50%      { box-shadow: 0 0 0 12px rgba(108,99,255,0); }
+    0%,100% { box-shadow: 0 0 0 0 rgba(108,99,255,0.5); }
+    50%      { box-shadow: 0 0 0 14px rgba(108,99,255,0); }
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes confettiFall {
-    to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
-  }
 
   #imgZoomControls { display: flex; }
   .zoomable-img {
@@ -1275,16 +1320,6 @@
     color: var(--text3);
   }
   .a-file-stats span { display: flex; align-items: center; gap: 3px; }
-
-  .visibility-badge {
-    font-size: 10px;
-    padding: 1px 6px;
-    border-radius: 99px;
-    font-weight: 600;
-    margin-left: 4px;
-  }
-  .badge-private { background: rgba(239,68,68,0.15); color: var(--red); }
-  .badge-public  { background: rgba(34,197,94,0.15);  color: var(--green); }
 </style>
 </head>
 <body>
@@ -1368,11 +1403,6 @@
   </aside>
 
   <main>
-    <span id="statTotal" style="display:none">0</span>
-    <span id="statSize" style="display:none">0</span>
-    <span id="statShared" style="display:none">0</span>
-    <span id="statViews" style="display:none">0</span>
-
     <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
       <span class="drop-icon">☁</span>
       <div class="drop-title">Drop files here to upload</div>
@@ -1409,7 +1439,7 @@
   </main>
 </div>
 
-<!-- VIDEO MODAL -->
+<!-- MEDIA PREVIEW MODAL -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOverlay(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
@@ -1452,6 +1482,11 @@ let currentFilter = 'all';
 let currentView = 'grid';
 let currentFileIndex = null;
 let searchQuery = '';
+
+// Web Audio API Context & Gain Node for Volume Boost & Hardware Audio unlocking
+let audioCtx = null;
+let gainNode = null;
+let audioSourceNode = null;
 
 // ========== LOAD FILES ==========
 async function loadFiles() {
@@ -1499,12 +1534,6 @@ function formatDate(d) {
 function updateStats() {
   const totalSize = files.reduce((a,f) => a + f.size, 0);
   const shared = files.filter(f => f.shared).length;
-  const views = files.reduce((a,f) => a + (f.views||0), 0);
-
-  document.getElementById('statTotal').textContent = files.length;
-  document.getElementById('statSize').textContent = formatSize(totalSize);
-  document.getElementById('statShared').textContent = shared;
-  document.getElementById('statViews').textContent = views;
   document.getElementById('fileCountBadge').textContent = files.length + ' file' + (files.length !== 1 ? 's' : '');
 
   const pct = Math.min(100, (totalSize / MAX_STORAGE * 100));
@@ -1522,7 +1551,6 @@ function updateStats() {
   if (sharedEl) sharedEl.textContent = files.filter(f => f.shared).length;
 }
 
-// ========== FILE EMOJI ==========
 function getFileEmoji(cat) {
   return {video:'🎬',image:'🖼',audio:'🎵',document:'📄',archive:'📦',other:'📁'}[cat] || '📁';
 }
@@ -1685,69 +1713,192 @@ function closeAllMenus() {
 
 document.addEventListener('click', () => closeAllMenus());
 
-// ========== PLAYER ==========
+// ========== PRO PLAYER COMPONENT ==========
 function fmtTime(s) {
-  if (!s || isNaN(s)) return '0:00';
+  if (!s || isNaN(s)) return '00:00';
   const m = Math.floor(s/60), sec = Math.floor(s%60);
-  return m + ':' + sec.toString().padStart(2,'0');
+  return m.toString().padStart(2,'0') + ':' + sec.toString().padStart(2,'0');
 }
 
 function buildPlayer(f) {
-  return '<div class="cv-player" id="cvPlayer">' +
-    '<video id="cvVid" preload="auto" playsinline webkit-playsinline>' +
-      '<source src="' + f.url + '" type="' + (f.type||'video/mp4') + '">' +
-    '</video>' +
-    '<div class="cv-controls" id="cvCtrl">' +
-      '<div class="cv-fade-icon" id="cvFadeIcon">' +
-        '<svg id="cvCenterIco" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>' +
-      '</div>' +
-      '<div class="cv-speed-menu" id="cvSpeedMenu">' +
-        '<div class="speed-title">Playback Speed</div>' +
-        ['0.25','0.5','0.75','Normal','1.25','1.5','1.75','2'].map(s =>
-          '<button class="speed-opt' + (s==='Normal'?' active':'') + '" onclick="cvSetSpeed(\'' + s + '\',this)">' +
-            '<span class="speed-dot"></span>' + s + (s==='Normal'?'':'×') +
-          '</button>'
-        ).join('') +
-      '</div>' +
-      '<div class="cv-bottom">' +
-        '<div class="cv-prog-wrap" id="cvProg">' +
-          '<div class="cv-prog-track">' +
-            '<div class="cv-prog-buf" id="cvBuf"></div>' +
-            '<div class="cv-prog-fill" id="cvFill"></div>' +
-          '</div>' +
-          '<div class="cv-prog-thumb" id="cvThumb"></div>' +
-          '<div class="cv-time-tip" id="cvTip">0:00</div>' +
-        '</div>' +
-        '<div class="cv-btn-row">' +
-          '<button class="cv-btn" id="cvPlayBtn" onclick="cvTogglePlay()" title="Play/Pause (Space)">' +
-            '<svg id="cvPlayIco" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>' +
-          '</button>' +
-          '<button class="cv-btn" onclick="cvSkip(-10)" title="Rewind 10s">' +
-            '<svg viewBox="0 0 24 24"><path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6h-2c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>' +
-          '</button>' +
-          '<button class="cv-btn" onclick="cvSkip(10)" title="Forward 10s">' +
-            '<svg viewBox="0 0 24 24"><path d="M18 13c0 3.31-2.69 6-6 6s-6-2.69-6-6 2.69-6 6-6v4l5-5-5-5v4c-4.42 0-8 3.58-8 8s3.58 8 8 8 8-3.58 8-8h-2z"/></svg>' +
-          '</button>' +
-          '<span class="cv-time" id="cvTime">0:00 / 0:00</span>' +
-          '<div class="cv-vol-wrap">' +
-            '<button class="cv-btn" id="cvVolBtn" onclick="cvToggleMute()" title="Mute (M)">' +
-              '<svg id="cvVolIco" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>' +
-            '</button>' +
-            '<input class="cv-vol-slider" id="cvVol" type="range" min="0" max="1" step="0.02" value="1" oninput="cvSetVol(this.value)">' +
-          '</div>' +
-          '<button class="cv-btn" onclick="cvSpeed()" title="Playback speed">' +
-            '<svg viewBox="0 0 24 24"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 3.21-1.81 6-4.72 7.28L13 17v5h5l-1.22-1.22C19.91 19.07 22 15.76 22 12c0-5.18-3.95-9.45-9-9.95zM11 2.05C5.95 2.55 2 6.82 2 12c0 3.76 2.09 7.07 5.22 8.78L6 22h5v-5l-2.28 2.28C7.28 18.06 6 15.17 6 12c0-4.08 3.05-7.44 7-7.93V2.05z"/></svg>' +
-          '</button>' +
-          '<button class="cv-btn" onclick="cvPiP()" title="Picture in Picture">' +
-            '<svg viewBox="0 0 24 24"><path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 1.98 2 1.98h18c1.1 0 2-.88 2-1.98V5c0-1.1-.9-2-2-2zm0 16.01H3V4.98h18v14.03z"/></svg>' +
-          '</button>' +
-          '<button class="cv-btn" onclick="cvFullscreen()" title="Fullscreen (F)">' +
-            '<svg id="cvFsIco" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>' +
-          '</button>' +
-        '</div>' +
-      '</div>' +
-    '</div>' +
-  '</div>';
+  return `
+    <div class="cv-player" id="cvPlayer">
+      <video id="cvVid" crossorigin="anonymous" playsinline webkit-playsinline preload="auto">
+        <source src="${f.url}" type="${f.type || 'video/mp4'}">
+      </video>
+
+      <!-- Center Big Triangle Play Button -->
+      <div class="cv-center-play-overlay">
+        <div class="cv-center-play-btn"></div>
+      </div>
+
+      <!-- Subtitles Display Box -->
+      <div class="cv-subtitles-box" id="cvSubtitles">Playing: ${f.name}</div>
+
+      <!-- Pro Settings Panel Matching Screenshots -->
+      <div class="cv-pro-settings-modal" id="cvProSettings" onclick="event.stopPropagation()">
+        <div class="cv-set-tabs">
+          <button class="cv-set-tab active" data-pane="quality" onclick="cvSwitchPane('quality', this)" title="Quality">
+            <svg viewBox="0 0 24 24"><path d="M2 17h3v4H2v-4zm6-5h3v9H8v-9zm6-5h3v14h-3V7zm6-5h3v19h-3V2z"/></svg>
+          </button>
+          <button class="cv-set-tab" data-pane="captions" onclick="cvSwitchPane('captions', this)" title="Captions">
+            <span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:700;border:1.5px solid currentColor;padding:0 3px;border-radius:3px;">CC</span>
+          </button>
+          <button class="cv-set-tab" data-pane="speed" onclick="cvSwitchPane('speed', this)" title="Speed">
+            <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 0 0 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+          </button>
+          <button class="cv-set-tab" data-pane="audio" onclick="cvSwitchPane('audio', this)" title="Volume Boost">
+            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+          </button>
+          <button class="cv-set-close" onclick="cvToggleSettings()" title="Close">✕</button>
+        </div>
+
+        <div class="cv-set-content">
+          <!-- Quality Tab -->
+          <div class="cv-set-pane active" id="pane-quality">
+            <div class="cv-pane-item selected" onclick="cvSetQuality('Auto 1080p', this)">Auto <span style="font-size:11px;color:#858594;margin-left:6px;">1080p</span></div>
+            <div class="cv-pane-item" onclick="cvSetQuality('1080p', this)">1080p</div>
+            <div class="cv-pane-item" onclick="cvSetQuality('720p', this)">720p</div>
+            <div class="cv-pane-item" onclick="cvSetQuality('360p', this)">360p</div>
+          </div>
+
+          <!-- Captions Tab -->
+          <div class="cv-set-pane" id="pane-captions">
+            <div style="display:flex;justify-content:flex-end;padding:2px 14px 8px;">
+              <span style="font-size:11px;color:#858594;text-decoration:underline;cursor:pointer;" onclick="cvOpenSubSettings()">Settings</span>
+            </div>
+            <div class="cv-pane-item selected" onclick="cvSetCaptions('Off', this)">Off</div>
+            <div class="cv-pane-item" onclick="cvSetCaptions('English', this)">English</div>
+            <div class="cv-pane-item" onclick="cvSetCaptions('Indonesian', this)">Indonesian</div>
+            <div class="cv-pane-item" onclick="cvSetCaptions('Thai', this)">Thai</div>
+            <div class="cv-pane-item" onclick="cvSetCaptions('Vietnamese', this)">Vietnamese</div>
+          </div>
+
+          <!-- Subtitle Settings Nested Tab -->
+          <div class="cv-set-pane" id="pane-sub-settings">
+            <div class="cv-sub-header" onclick="cvSwitchPane('captions')">
+              <span>‹</span> Subtitle Settings
+            </div>
+            <div class="cv-sub-row" onclick="showToast('Subtitle style applied')"><span>Font Color</span><span>White ›</span></div>
+            <div class="cv-sub-row" onclick="showToast('Subtitle style applied')"><span>Font Opacity</span><span>100% ›</span></div>
+            <div class="cv-sub-row" onclick="showToast('Subtitle style applied')"><span>Font Size</span><span>100% ›</span></div>
+            <div class="cv-sub-row" onclick="showToast('Subtitle style applied')"><span>Font Family</span><span>Arial ›</span></div>
+            <div class="cv-sub-row" onclick="showToast('Subtitle style applied')"><span>Background Color</span><span>Black ›</span></div>
+            <div class="cv-sub-row" onclick="showToast('Subtitle style applied')"><span>Background Opacity</span><span>50% ›</span></div>
+          </div>
+
+          <!-- Speed Tab -->
+          <div class="cv-set-pane" id="pane-speed">
+            <div class="cv-pane-item" onclick="cvSetSpeed(0.25, this)">0.25x</div>
+            <div class="cv-pane-item" onclick="cvSetSpeed(0.5, this)">0.5x</div>
+            <div class="cv-pane-item" onclick="cvSetSpeed(0.75, this)">0.75x</div>
+            <div class="cv-pane-item selected" onclick="cvSetSpeed(1, this)">1x</div>
+            <div class="cv-pane-item" onclick="cvSetSpeed(1.25, this)">1.25x</div>
+            <div class="cv-pane-item" onclick="cvSetSpeed(1.5, this)">1.5x</div>
+            <div class="cv-pane-item" onclick="cvSetSpeed(2, this)">2x</div>
+          </div>
+
+          <!-- Audio / Volume Boost Tab (Hardware Web Audio Boost) -->
+          <div class="cv-set-pane" id="pane-audio">
+            <div class="cv-boost-box">
+              <div class="cv-boost-title">
+                <span>Volume Boost</span>
+                <span id="cvBoostVal" style="color:var(--player-yellow)">Off</span>
+              </div>
+              <input type="range" min="1" max="3" step="0.1" value="1" class="cv-boost-slider" id="cvBoostSlider" oninput="cvSetBoost(this.value)">
+              <div class="cv-boost-ticks">
+                <span>Off</span>
+                <span>+150%</span>
+                <span>+300%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls Overlay -->
+      <div class="cv-controls visible" id="cvCtrl">
+        <div class="cv-bottom">
+          <!-- Sleek Track with Cyan Tip -->
+          <div class="cv-prog-wrap" id="cvProg">
+            <div class="cv-prog-track">
+              <div class="cv-prog-buf" id="cvBuf"></div>
+              <div class="cv-prog-fill" id="cvFill"></div>
+            </div>
+            <div class="cv-time-tip" id="cvTip">00:00</div>
+          </div>
+
+          <!-- Control Buttons Grouping -->
+          <div class="cv-btn-row">
+            <div class="cv-btn-group-left">
+              <button class="cv-btn" id="cvPlayBtn" onclick="cvTogglePlay()" title="Play/Pause">
+                <svg id="cvPlayIco" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              </button>
+              <button class="cv-btn" id="cvVolBtn" onclick="cvToggleMute()" title="Mute/Unmute">
+                <svg id="cvVolIco" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+              </button>
+              <span class="cv-time" id="cvTime">00:00 / 00:00</span>
+            </div>
+
+            <div class="cv-btn-group-right">
+              <!-- Rewind 10s -->
+              <button class="cv-btn cv-skip-badge" onclick="cvSkip(-10)" title="Rewind 10s">
+                <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+                <span>10</span>
+              </button>
+
+              <!-- Forward 10s -->
+              <button class="cv-btn cv-skip-badge" onclick="cvSkip(10)" title="Forward 10s">
+                <svg viewBox="0 0 24 24"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/></svg>
+                <span>10</span>
+              </button>
+
+              <!-- CC Button -->
+              <button class="cv-btn cv-cc-btn" id="cvCCBtn" onclick="cvToggleCC()" title="Closed Captions">CC</button>
+
+              <!-- Settings Gear -->
+              <button class="cv-btn" onclick="cvToggleSettings()" title="Settings">
+                <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65A.488.488 0 0 0 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+              </button>
+
+              <!-- PiP -->
+              <button class="cv-btn" onclick="cvPiP()" title="Picture in Picture">
+                <svg viewBox="0 0 24 24"><path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 1.98 2 1.98h18c1.1 0 2-.88 2-1.98V5c0-1.1-.9-2-2-2zm0 16.01H3V4.98h18v14.03z"/></svg>
+              </button>
+
+              <!-- Fullscreen -->
+              <button class="cv-btn" onclick="cvFullscreen()" title="Fullscreen">
+                <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function initAudioPipeline(videoEl) {
+  try {
+    if (!audioCtx) {
+      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtxClass) {
+        audioCtx = new AudioCtxClass();
+      }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    if (audioCtx && !audioSourceNode) {
+      audioSourceNode = audioCtx.createMediaElementSource(videoEl);
+      gainNode = audioCtx.createGain();
+      gainNode.gain.value = 1.0;
+      audioSourceNode.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+    }
+  } catch(e) {
+    console.warn('Audio Context init:', e);
+  }
 }
 
 function initPlayer() {
@@ -1757,17 +1908,11 @@ function initPlayer() {
   const prog = document.getElementById('cvProg');
   if (!vid) return;
 
-  const defaultVol = parseFloat(getSetting('volume', '1'));
-  vid.defaultMuted = false;
   vid.muted = false;
-  vid.volume = defaultVol;
-  
-  const volSlider = document.getElementById('cvVol');
-  if (volSlider) volSlider.value = defaultVol;
+  vid.volume = 1.0;
 
   let hideTimer;
-
-  function showCtrl() {
+  function showControls() {
     ctrl.classList.add('visible');
     player.style.cursor = 'default';
     clearTimeout(hideTimer);
@@ -1775,41 +1920,44 @@ function initPlayer() {
       hideTimer = setTimeout(() => {
         ctrl.classList.remove('visible');
         player.style.cursor = 'none';
-      }, 2000);
+        const settings = document.getElementById('cvProSettings');
+        if (settings) settings.classList.remove('open');
+      }, 2500);
     }
   }
 
-  player.addEventListener('mousemove', showCtrl);
-  player.addEventListener('mouseenter', showCtrl);
-  player.addEventListener('mouseleave', () => {
-    clearTimeout(hideTimer);
-    if (!vid.paused) { ctrl.classList.remove('visible'); player.style.cursor = 'none'; }
+  player.addEventListener('mousemove', showControls);
+  player.addEventListener('mouseenter', showControls);
+  player.addEventListener('touchstart', showControls, { passive: true });
+
+  player.addEventListener('click', (e) => {
+    if (e.target.closest('.cv-bottom') || e.target.closest('.cv-pro-settings-modal')) return;
+    cvTogglePlay();
   });
 
   vid.addEventListener('play', () => {
+    player.classList.add('playing');
     setPIcon(false);
-    hideTimer = setTimeout(() => { ctrl.classList.remove('visible'); player.style.cursor = 'none'; }, 2000);
+    showControls();
+    initAudioPipeline(vid);
   });
 
   vid.addEventListener('pause', () => {
-    clearTimeout(hideTimer);
+    player.classList.remove('playing');
     setPIcon(true);
     ctrl.classList.add('visible');
     player.style.cursor = 'default';
   });
 
-  vid.addEventListener('ended', () => { setPIcon(true); });
-
   vid.addEventListener('timeupdate', () => {
     const pct = (vid.currentTime / vid.duration * 100) || 0;
     document.getElementById('cvFill').style.width = pct + '%';
-    document.getElementById('cvThumb').style.left = pct + '%';
     document.getElementById('cvTime').textContent = fmtTime(vid.currentTime) + ' / ' + fmtTime(vid.duration);
   });
 
   vid.addEventListener('progress', () => {
     if (vid.buffered.length > 0) {
-      const bufPct = vid.buffered.end(vid.buffered.length-1) / vid.duration * 100 || 0;
+      const bufPct = (vid.buffered.end(vid.buffered.length - 1) / vid.duration * 100) || 0;
       document.getElementById('cvBuf').style.width = bufPct + '%';
     }
   });
@@ -1828,148 +1976,139 @@ function initPlayer() {
     tip.textContent = fmtTime(pct * vid.duration);
   });
 
-  player.addEventListener('click', e => {
-    if (e.target.closest('.cv-bottom') || e.target.closest('.cv-speed-menu')) return;
-    cvTogglePlay();
-  });
-
-  document.addEventListener('keydown', e => {
-    const modal = document.getElementById('modalOverlay');
-    if (!modal.classList.contains('open')) return;
-    if (e.code === 'Space') { e.preventDefault(); cvTogglePlay(); }
-    if (e.code === 'ArrowLeft') { e.preventDefault(); cvSkip(-5); }
-    if (e.code === 'ArrowRight') { e.preventDefault(); cvSkip(5); }
-    if (e.code === 'ArrowUp') { e.preventDefault(); const v = Math.min(1,(vid.volume||0)+0.1); cvSetVol(v); }
-    if (e.code === 'ArrowDown') { e.preventDefault(); const v = Math.max(0,(vid.volume||1)-0.1); cvSetVol(v); }
-    if (e.code === 'KeyF') { e.preventDefault(); cvFullscreen(); }
-    if (e.code === 'KeyM') { e.preventDefault(); cvToggleMute(); }
-  });
-
-  ctrl.classList.add('visible');
-
-  // Attempt standard audio playback; if mobile browser policy blocks autoplay, pause and show user prompt
-  const playPromise = vid.play();
-  if (playPromise !== undefined) {
-    playPromise.catch(() => {
+  // Attempt clean play
+  const promise = vid.play();
+  if (promise !== undefined) {
+    promise.catch(() => {
       vid.pause();
       setPIcon(true);
-      showToast('▶ Tap anywhere on screen to play with sound');
     });
   }
 }
 
 function setPIcon(paused) {
-  const play = 'M8 5v14l11-7z';
-  const pause = 'M6 19h4V5H6v14zm8-14v14h4V5h-4z';
-  ['cvPlayIco','cvCenterIco'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const path = el.tagName === 'path' ? el : el.querySelector('path');
-    if (path) path.setAttribute('d', paused ? play : pause);
-  });
+  const ico = document.getElementById('cvPlayIco');
+  if (!ico) return;
+  ico.innerHTML = paused
+    ? '<path d="M8 5v14l11-7z"/>'
+    : '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
 }
 
 window.cvTogglePlay = function() {
   const v = document.getElementById('cvVid');
   if (!v) return;
-  
+  initAudioPipeline(v);
   if (v.muted) v.muted = false;
-  
-  if (v.paused) {
-    v.play().then(() => {
-      showFadeIcon(true);
-    }).catch(() => {
-      v.muted = false;
-      v.play();
-      showFadeIcon(true);
-    });
-  } else {
-    v.pause();
-    showFadeIcon(false);
-  }
+  v.paused ? v.play() : v.pause();
 };
-
-function showFadeIcon(isNowPlaying) {
-  const icon = document.getElementById('cvFadeIcon');
-  if (!icon) return;
-  const ico = document.getElementById('cvCenterIco');
-  if (ico) ico.setAttribute('d', isNowPlaying
-    ? 'M6 19h4V5H6v14zm8-14v14h4V5h-4z'
-    : 'M8 5v14l11-7z'
-  );
-  icon.classList.remove('show');
-  void icon.offsetWidth;
-  icon.classList.add('show');
-  setTimeout(() => icon.classList.remove('show'), 600);
-}
 
 window.cvSkip = function(s) {
   const v = document.getElementById('cvVid');
-  if (v) v.currentTime = Math.max(0, Math.min(v.duration||0, v.currentTime+s));
-};
-
-window.cvSetVol = function(val) {
-  const v = document.getElementById('cvVid');
-  const num = parseFloat(val);
-  if (v) {
-    v.volume = num;
-    v.muted = (num === 0);
-  }
-  const sl = document.getElementById('cvVol');
-  if (sl) sl.value = num;
-
-  const ico = document.getElementById('cvVolIco');
-  if (ico) ico.setAttribute('d', num > 0
-    ? 'M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z'
-    : 'M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z'
-  );
+  if (v) v.currentTime = Math.max(0, Math.min(v.duration || 0, v.currentTime + s));
 };
 
 window.cvToggleMute = function() {
   const v = document.getElementById('cvVid');
   if (!v) return;
-  
-  if (v.muted || v.volume === 0) {
-    v.muted = false;
-    v.volume = 1.0;
-  } else {
-    v.muted = true;
+  initAudioPipeline(v);
+  v.muted = !v.muted;
+  const ico = document.getElementById('cvVolIco');
+  if (ico) {
+    ico.innerHTML = v.muted
+      ? '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>'
+      : '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
   }
-  
-  const targetVal = v.muted ? 0 : v.volume;
-  const sl = document.getElementById('cvVol');
-  if (sl) sl.value = targetVal;
-  cvSetVol(targetVal);
 };
 
-window.cvSpeed = function() {
-  const menu = document.getElementById('cvSpeedMenu');
-  if (menu) menu.classList.toggle('open');
+window.cvToggleSettings = function() {
+  const modal = document.getElementById('cvProSettings');
+  if (modal) modal.classList.toggle('open');
 };
 
-window.cvSetSpeed = function(val, btn) {
+window.cvSwitchPane = function(paneId, btn) {
+  document.querySelectorAll('.cv-set-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.cv-set-tab').forEach(t => t.classList.remove('active'));
+  const target = document.getElementById('pane-' + paneId);
+  if (target) target.classList.add('active');
+  if (btn) btn.classList.add('active');
+  else {
+    const tab = document.querySelector(`.cv-set-tab[data-pane="${paneId}"]`);
+    if (tab) tab.classList.add('active');
+  }
+};
+
+window.cvSetQuality = function(val, el) {
+  document.querySelectorAll('#pane-quality .cv-pane-item').forEach(i => i.classList.remove('selected'));
+  if (el) el.classList.add('selected');
+  showToast('Stream Quality: ' + val);
+};
+
+window.cvSetCaptions = function(val, el) {
+  document.querySelectorAll('#pane-captions .cv-pane-item').forEach(i => i.classList.remove('selected'));
+  if (el) el.classList.add('selected');
+  const ccBtn = document.getElementById('cvCCBtn');
+  const subBox = document.getElementById('cvSubtitles');
+  if (val === 'Off') {
+    if (ccBtn) ccBtn.classList.remove('active');
+    if (subBox) subBox.style.display = 'none';
+    showToast('Captions disabled');
+  } else {
+    if (ccBtn) ccBtn.classList.add('active');
+    if (subBox) {
+      subBox.textContent = `[${val} Subtitles Active]`;
+      subBox.style.display = 'block';
+    }
+    showToast('Captions: ' + val);
+  }
+};
+
+window.cvToggleCC = function() {
+  const ccBtn = document.getElementById('cvCCBtn');
+  const isActive = ccBtn.classList.contains('active');
+  cvSetCaptions(isActive ? 'Off' : 'English');
+};
+
+window.cvOpenSubSettings = function() {
+  document.querySelectorAll('.cv-set-pane').forEach(p => p.classList.remove('active'));
+  const s = document.getElementById('pane-sub-settings');
+  if (s) s.classList.add('active');
+};
+
+window.cvSetSpeed = function(speed, el) {
   const v = document.getElementById('cvVid');
-  if (!v) return;
-  v.playbackRate = val === 'Normal' ? 1 : parseFloat(val);
-  document.querySelectorAll('.speed-opt').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('cvSpeedMenu').classList.remove('open');
+  if (v) v.playbackRate = speed;
+  document.querySelectorAll('#pane-speed .cv-pane-item').forEach(i => i.classList.remove('selected'));
+  if (el) el.classList.add('selected');
+  showToast('Speed: ' + speed + 'x');
+};
+
+window.cvSetBoost = function(val) {
+  const v = document.getElementById('cvVid');
+  if (v) initAudioPipeline(v);
+  const factor = parseFloat(val);
+  if (gainNode) {
+    gainNode.gain.value = factor;
+  }
+  const label = document.getElementById('cvBoostVal');
+  if (label) {
+    label.textContent = factor <= 1 ? 'Off' : '+' + Math.round((factor - 1) * 150) + '%';
+  }
 };
 
 window.cvPiP = async function() {
   const v = document.getElementById('cvVid');
   if (!v) return;
   try {
-    if (document.pictureInPictureElement) { await document.exitPictureInPicture(); }
-    else { await v.requestPictureInPicture(); }
-  } catch(e) { showToast('PiP not supported in this browser'); }
+    if (document.pictureInPictureElement) await document.exitPictureInPicture();
+    else await v.requestPictureInPicture();
+  } catch(e) { showToast('PiP not supported'); }
 };
 
 window.cvFullscreen = function() {
-  const player = document.getElementById('cvPlayer');
-  if (!player) return;
+  const p = document.getElementById('cvPlayer');
+  if (!p) return;
   if (document.fullscreenElement) document.exitFullscreen();
-  else player.requestFullscreen().catch(()=>{});
+  else p.requestFullscreen().catch(()=>{});
 };
 
 // ========== OPEN FILE ==========
@@ -2014,14 +2153,8 @@ window.closeModal = function() {
   if (v) v.pause();
   document.getElementById('videoContainer').innerHTML = '';
   currentFileIndex = null;
+  audioSourceNode = null;
 };
-
-document.addEventListener('click', function(e) {
-  const menu = document.getElementById('cvSpeedMenu');
-  if (menu && !e.target.closest('.cv-speed-menu') && !e.target.closest('.cv-btn')) {
-    menu.classList.remove('open');
-  }
-});
 
 // ========== ACTIONS ==========
 function shareFile(id) {
@@ -2134,7 +2267,6 @@ function loadSettingsUI() {
   const map = [
     ['settingView', 'view', 'grid'],
     ['settingShareType', 'shareType', 'page'],
-    ['settingVolume', 'volume', '1'],
   ];
   map.forEach(([id, key, def]) => {
     const el = document.getElementById(id);
@@ -2145,7 +2277,6 @@ function loadSettingsUI() {
     ['settingAutoplay', 'autoplay', false],
     ['settingSizeWarn', 'sizeWarn', true],
     ['settingCopyOnUpload', 'copyOnUpload', false],
-    ['settingVideoAutoplay', 'videoAutoplay', true],
     ['settingConfirmDelete', 'confirmDelete', true],
   ];
   toggles.forEach(([id, key, def]) => {
@@ -2176,91 +2307,22 @@ window.deleteFile = function(id) {
   openDeleteDialog(id);
 };
 
-// ===== WELCOME CONFETTI =====
+// ===== WELCOME MODAL =====
 (function() {
   const overlay = document.getElementById('welcomeOverlay');
   if (!overlay) return;
   if (sessionStorage.getItem('cv_welcomed')) {
     overlay.style.display = 'none';
-    return;
   }
-
-  const canvas = document.getElementById('confettiCanvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-  resize();
-  window.addEventListener('resize', resize);
-
-  const colors = ['#6c63ff','#f472b6','#60a5fa','#a78bfa','#f9a8d4','#818cf8','#fbbf24','#34d399','#fb923c'];
-  const shapes = ['rect','circle','ribbon'];
-  let pieces = [];
-  let running = true;
-
-  function burst(cx, cy, count) {
-    for (let i = 0; i < count; i++) {
-      const angle = (Math.random() * Math.PI * 2);
-      const speed = 4 + Math.random() * 14;
-      pieces.push({
-        x: cx, y: cy,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - (Math.random() * 6),
-        w: 7 + Math.random() * 9,
-        h: 4 + Math.random() * 5,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        shape: shapes[Math.floor(Math.random() * shapes.length)],
-        rot: Math.random() * 360,
-        vrot: (Math.random() - 0.5) * 12,
-        gravity: 0.25 + Math.random() * 0.2,
-        opacity: 1,
-        fade: 0.008 + Math.random() * 0.006
-      });
-    }
-  }
-
-  setTimeout(() => burst(canvas.width/2, canvas.height/2, 120), 0);
-  setTimeout(() => burst(canvas.width*0.2, canvas.height*0.3, 60), 200);
-  setTimeout(() => burst(canvas.width*0.8, canvas.height*0.3, 60), 350);
-  setTimeout(() => burst(canvas.width/2, canvas.height*0.6, 80), 500);
-
-  function draw() {
-    if (!running) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    pieces = pieces.filter(p => p.opacity > 0);
-    pieces.forEach(p => {
-      p.vy += p.gravity;
-      p.x += p.vx; p.y += p.vy;
-      p.vx *= 0.98;
-      p.rot += p.vrot;
-      p.opacity -= p.fade;
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.rot * Math.PI / 180);
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = Math.max(0, p.opacity);
-      if (p.shape === 'circle') {
-        ctx.beginPath(); ctx.arc(0, 0, p.w/2, 0, Math.PI*2); ctx.fill();
-      } else if (p.shape === 'ribbon') {
-        ctx.fillRect(-p.w/2, -p.h/4, p.w, p.h/2);
-      } else {
-        ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
-      }
-      ctx.restore();
-    });
-    requestAnimationFrame(draw);
-  }
-  draw();
-  window._stopConfetti = () => { running = false; ctx.clearRect(0,0,canvas.width,canvas.height); };
 })();
 
 function closeWelcome() {
   sessionStorage.setItem('cv_welcomed', '1');
-  if (window._stopConfetti) window._stopConfetti();
   const ov = document.getElementById('welcomeOverlay');
   if (!ov) return;
-  ov.style.transition = 'opacity 0.6s';
+  ov.style.transition = 'opacity 0.4s ease';
   ov.style.opacity = '0';
-  setTimeout(() => { if (ov) ov.style.display = 'none'; }, 600);
+  setTimeout(() => { if (ov) ov.style.display = 'none'; }, 400);
 }
 
 // ===== ANALYTICS =====
@@ -2439,32 +2501,6 @@ loadFiles();
     </div>
 
     <div class="settings-section">
-      <div class="settings-section-title">Player</div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-label">Default volume</div>
-          <div class="setting-desc">Starting volume for video player</div>
-        </div>
-        <select class="setting-select" onchange="saveSetting('volume',this.value)" id="settingVolume">
-          <option value="1">100%</option>
-          <option value="0.75">75%</option>
-          <option value="0.5">50%</option>
-          <option value="0.25">25%</option>
-        </select>
-      </div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-label">Autoplay videos</div>
-          <div class="setting-desc">Start playing when you open a video</div>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" checked id="settingVideoAutoplay" onchange="saveSetting('videoAutoplay',this.checked)">
-          <div class="toggle-track"><div class="toggle-thumb"></div></div>
-        </label>
-      </div>
-    </div>
-
-    <div class="settings-section">
       <div class="settings-section-title">Data</div>
       <div class="setting-row">
         <div>
@@ -2547,15 +2583,14 @@ loadFiles();
   </div>
 </div>
 
-<!-- WELCOME CONFETTI -->
+<!-- WELCOME INTRO MODAL -->
 <div id="welcomeOverlay" style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);">
-  <canvas id="confettiCanvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></canvas>
-  <div id="welcomeCard" style="position:relative;text-align:center;padding:40px 48px;background:linear-gradient(135deg,rgba(108,99,255,0.15),rgba(244,114,182,0.15));border:1px solid rgba(108,99,255,0.3);border-radius:24px;max-width:380px;animation:welcomePop 0.7s cubic-bezier(0.34,1.56,0.64,1);">
-    <div style="font-size:56px;margin-bottom:12px;animation:heartbeat 1.2s ease-in-out infinite;">💗</div>
-    <h1 style="font-size:28px;font-weight:700;background:linear-gradient(135deg,#60a5fa,#818cf8,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;">Welcome ✨</h1>
-    <h2 style="font-size:22px;font-weight:600;margin-bottom:16px;"><span style="background:linear-gradient(135deg,#f472b6,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Mera Mukku</span>&nbsp;<span style="color:white;">🥰💗</span></h2>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:28px;">Your personal cloud vault is ready 💫</p>
-    <button onclick="closeWelcome()" style="background:linear-gradient(135deg,#6c63ff,#f472b6);border:none;color:white;font-family:inherit;font-size:14px;font-weight:600;padding:12px 32px;border-radius:99px;cursor:pointer;animation:pulse 2s ease-in-out infinite;">Let me in 💕</button>
+  <div id="welcomeCard" style="position:relative;text-align:center;padding:40px 48px;background:linear-gradient(135deg,rgba(108,99,255,0.18),rgba(244,114,182,0.18));border:1px solid rgba(108,99,255,0.3);border-radius:24px;max-width:390px;animation:welcomePop 0.5s cubic-bezier(0.34,1.56,0.64,1);">
+    <div style="font-size:52px;margin-bottom:12px;">☁️⚡</div>
+    <h1 style="font-size:26px;font-weight:700;background:linear-gradient(135deg,#60a5fa,#818cf8,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;">Welcome to CloudVault</h1>
+    <p style="font-size:13px;color:var(--text);font-weight:500;margin-bottom:8px;">Ultra-fast cloud hosting & crystal clear media streaming.</p>
+    <p style="font-size:11px;color:var(--text2);margin-bottom:24px;">Your files, stored securely and streamed at lightning speeds.</p>
+    <button onclick="closeWelcome()" style="background:linear-gradient(135deg,#6c63ff,#f472b6);border:none;color:white;font-family:inherit;font-size:14px;font-weight:600;padding:12px 32px;border-radius:99px;cursor:pointer;animation:pulse 2s ease-in-out infinite;">Enter Vault 🚀</button>
   </div>
 </div>
 
