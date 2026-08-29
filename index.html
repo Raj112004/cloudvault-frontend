@@ -208,7 +208,7 @@
   .view-toggle button { background: none; border: none; padding: 6px 10px; cursor: pointer; color: var(--text3); font-size: 13px; }
   .view-toggle button.active { background: var(--surface2); color: var(--text); }
 
-  /* RESPONSIVE FILE GRID */
+  /* 2-COLUMN RESPONSIVE FILE GRID */
   .file-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -620,12 +620,36 @@ var currentView = 'grid';
 var currentFileIndex = null;
 var searchQuery = '';
 
+// In-memory cache for reliable blob URLs
+var blobCache = {};
+
 function getRewindSvg() {
   return '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 3a9 9 0 1 0 8.7 6.7.75.75 0 0 0-1.46-.35A7.5 7.5 0 1 1 12.5 4.5H9.6l1.7-1.7a.75.75 0 0 0-1.06-1.06L6.97 4.97a.75.75 0 0 0 0 1.06l3.27 3.27a.75.75 0 0 0 1.06-1.06L9.6 6.5h2.9A9 9 0 0 0 12.5 3zm-2.8 8.2v5.6h1.2v-4.5l-.9.4-.3-.8 1.1-.7h.9zm3.8 0c-1 0-1.6.7-1.6 2v1.6c0 1.3.6 2 1.6 2s1.6-.7 1.6-2v-1.6c0-1.3-.6-2-1.6-2zm.4 3.7c0 .7-.2 1-.4 1s-.4-.3-.4-1v-1.8c0-.7.2-1 .4-1s.4.3.4 1v1.8z"/></svg>';
 }
 
 function getForwardSvg() {
   return '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.5 3a9 9 0 1 1-8.7 6.7.75.75 0 0 1 1.46-.35A7.5 7.5 0 1 0 11.5 4.5h2.9l-1.7-1.7a.75.75 0 0 1 1.06-1.06l3.27 3.27a.75.75 0 0 1 0 1.06l-3.27 3.27a.75.75 0 0 1-1.06-1.06l1.7-1.7h-2.9A9 9 0 0 1 11.5 3zm-2.8 8.2v5.6h1.2v-4.5l-.9.4-.3-.8 1.1-.7h.9zm3.8 0c-1 0-1.6.7-1.6 2v1.6c0 1.3.6 2 1.6 2s1.6-.7 1.6-2v-1.6c0-1.3-.6-2-1.6-2zm.4 3.7c0 .7-.2 1-.4 1s-.4-.3-.4-1v-1.8c0-.7.2-1 .4-1s.4.3.4 1v1.8z"/></svg>';
+}
+
+// Pre-fetch raw images as blobs to prevent expired 401/403 authorization blocks
+function fetchBlobUrl(url, id, callback) {
+  if (blobCache[id]) {
+    callback(blobCache[id]);
+    return;
+  }
+  fetch(url)
+    .then(function(res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.blob();
+    })
+    .then(function(blob) {
+      var objUrl = URL.createObjectURL(blob);
+      blobCache[id] = objUrl;
+      callback(objUrl);
+    })
+    .catch(function() {
+      callback(url);
+    });
 }
 
 // ========== LOAD FILES ==========
@@ -744,6 +768,7 @@ function handleFiles(fileList) {
       try {
         var data = JSON.parse(xhr.responseText);
         if (data.success) {
+          blobCache[data.file.id] = tempBlobUrl;
           files.unshift({
             id: data.file.id,
             name: data.file.name,
@@ -751,7 +776,7 @@ function handleFiles(fileList) {
             type: data.file.type,
             ext: data.file.name.split('.').pop() || '',
             category: data.file.category,
-            url: data.file.public_url || tempBlobUrl,
+            url: tempBlobUrl,
             date: new Date(data.file.created_at),
             views: 0,
             shared: false,
@@ -803,22 +828,28 @@ function renderFiles() {
     area.innerHTML = '<div class="file-list"><div class="list-header"><div></div><div>Name</div><div>Type</div><div>Size</div><div>Date</div><div></div></div>' + filtered.map(function(f,i) { return renderRow(f,i); }).join('') + '</div>';
   }
   document.querySelectorAll('#fileArea .card-dropdown').forEach(function(m) { document.body.appendChild(m); });
+
+  // Resolve image blobs asynchronously for grid cards
+  filtered.forEach(function(f) {
+    if (f.category === 'image') {
+      fetchBlobUrl(f.url, f.id, function(resolvedUrl) {
+        var el = document.getElementById('img-thumb-' + f.id);
+        if (el) el.src = resolvedUrl;
+      });
+    }
+  });
 }
 
-function handleImgError(img, id) {
+function handleImgError(img) {
   img.onerror = null;
-  // Attempt to refresh thumbnail with direct backend endpoint
-  img.src = BACKEND_URL + '/files';
-  img.onerror = function() {
-    img.style.display = 'none';
-    var parent = img.parentElement;
-    if (parent) {
-      var span = document.createElement('span');
-      span.style.fontSize = '28px';
-      span.textContent = '🖼';
-      parent.appendChild(span);
-    }
-  };
+  img.style.display = 'none';
+  var parent = img.parentElement;
+  if (parent) {
+    var span = document.createElement('span');
+    span.style.fontSize = '28px';
+    span.textContent = '🖼';
+    parent.appendChild(span);
+  }
 }
 
 function renderCard(f, i) {
@@ -826,9 +857,9 @@ function renderCard(f, i) {
   var thumb = '<span style="font-size:28px">' + emoji + '</span>';
   
   if (f.category === 'video') {
-    thumb = '<video src="' + f.url + '" muted preload="metadata" onloadedmetadata="this.currentTime=1"></video>';
+    thumb = '<video src="' + (blobCache[f.id] || f.url) + '" muted preload="metadata" onloadedmetadata="this.currentTime=1"></video>';
   } else if (f.category === 'image') {
-    thumb = '<img src="' + f.url + '" alt="' + f.name + '" loading="lazy" onerror="handleImgError(this, \'' + f.id + '\')">';
+    thumb = '<img id="img-thumb-' + f.id + '" src="' + (blobCache[f.id] || f.url) + '" alt="' + f.name + '" loading="lazy" onerror="handleImgError(this)">';
   }
 
   return '<div class="file-card" onclick="openFile(\'' + f.id + '\')">' +
@@ -895,7 +926,7 @@ function buildPlayer(f) {
   var html = '';
   html += '<div class="cv-player" id="cvPlayer">';
   html += '<video id="cvVid" playsinline webkit-playsinline preload="auto">';
-  html += '<source src="' + f.url + '" type="' + (f.type || 'video/mp4') + '">';
+  html += '<source src="' + (blobCache[f.id] || f.url) + '" type="' + (f.type || 'video/mp4') + '">';
   html += '</video>';
   html += '<div class="cv-center-play-overlay"><div class="cv-center-play-btn"></div></div>';
   html += '<div class="cv-subtitles-box" id="cvSubtitles"></div>';
@@ -1179,9 +1210,12 @@ function openFile(id) {
     } else if (f.category === 'image') {
       if (imgZoom) imgZoom.style.display = 'flex';
       imgZoomReset();
-      container.innerHTML = '<img class="zoomable-img" src="' + f.url + '" alt="' + f.name + '" onclick="imgZoom(0.2)">';
+      container.innerHTML = '<div style="color:#777;font-size:12px;">Loading preview...</div>';
+      fetchBlobUrl(f.url, f.id, function(blobUrl) {
+        container.innerHTML = '<img class="zoomable-img" src="' + blobUrl + '" alt="' + f.name + '" onclick="imgZoom(0.2)">';
+      });
     } else if (f.category === 'audio') {
-      container.innerHTML = '<div class="video-placeholder" style="gap:12px"><span style="font-size:44px">🎵</span><p>' + f.name + '</p><audio src="' + f.url + '" controls style="width:280px;"></audio></div>';
+      container.innerHTML = '<div class="video-placeholder" style="gap:12px"><span style="font-size:44px">🎵</span><p>' + f.name + '</p><audio src="' + (blobCache[f.id] || f.url) + '" controls style="width:280px;"></audio></div>';
     } else {
       container.innerHTML = '<div class="video-placeholder"><span>' + getFileEmoji(f.category) + '</span><p>No preview available</p><a href="' + f.url + '" target="_blank" style="color:var(--accent);font-size:12px;margin-top:10px;padding:6px 14px;border:1px solid var(--accent);border-radius:6px;text-decoration:none;">↓ Download file</a></div>';
     }
