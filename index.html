@@ -2014,20 +2014,12 @@ function openFile(id) {
   document.getElementById('modalInfo').textContent = f.ext.toUpperCase() + ' · ' + formatSize(f.size) + ' · ' + formatDate(f.date);
 
   const container = document.getElementById('videoContainer');
-  const imgZoomCtrl2 = document.getElementById('imgZoomControls');
-  if (imgZoomCtrl2) imgZoomCtrl2.style.display = 'none';
 
   if (f.category === 'video') {
     container.innerHTML = buildPlayer(f);
     initPlayer();
   } else if (f.category === 'image') {
-    const zoomCtrl = document.getElementById('imgZoomControls');
-    if (zoomCtrl) zoomCtrl.style.display = 'flex';
-    imgZoomReset();
-    container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;overflow:auto;">' +
-      '<img class="zoomable-img" src="' + f.url + '" alt="' + f.name + '" onclick="imgZoom(0.2)" ' +
-      'onerror="this.outerHTML='<div style=\"padding:24px;color:#888;text-align:center\">Image could not load — URL may have expired. Close and reopen the file.</div>'">' +
-      '</div>';
+    container.innerHTML = '<img src="' + f.url + '" style="max-width:100%;max-height:100%;object-fit:contain;" alt="' + f.name + '">';
   } else if (f.category === 'audio') {
     container.innerHTML = '<div class="video-placeholder" style="gap:16px"><span style="font-size:52px;animation:spin 4s linear infinite">🎵</span><p style="font-size:13px;font-weight:500">' + f.name + '</p><audio src="' + f.url + '" controls style="width:300px;margin-top:4px;"></audio></div>';
   } else {
@@ -2071,25 +2063,11 @@ function shareFile(id) {
 
 function shareCurrentFile() { if (currentFileIndex) shareFile(currentFileIndex); }
 
-async function downloadFile(id) {
+function downloadFile(id) {
   const f = files.find(x => x.id == id);
   if (!f) return;
-  showToast('Starting download...');
-  try {
-    const res = await fetch(f.url);
-    const blob = await res.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = f.name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-    showToast('Downloaded: ' + f.name);
-  } catch(e) {
-    window.open(f.url, '_blank');
-  }
+  const a = document.createElement('a');
+  a.href = f.url; a.download = f.name; a.click();
 }
 
 function downloadCurrentFile() { if (currentFileIndex) downloadFile(currentFileIndex); }
