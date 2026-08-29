@@ -1,1354 +1,2315 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>CloudVault — Store. Share. Stream.</title>
+
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%236c63ff'/><stop offset='100%25' stop-color='%23f472b6'/></linearGradient></defs><rect width='100' height='100' rx='20' fill='url(%23g)'/><text y='.9em' font-size='70' x='15'>☁</text></svg>" type="image/svg+xml">
+
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600&family=Syne:wght@600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <style>
+
   :root {
+
     --bg: #080809;
+
     --surface: #0f0f11;
+
     --surface2: #161619;
+
     --border: #1e1e23;
+
     --border2: #2a2a32;
+
     --text: #ededf0;
+
     --text2: #7a7a8a;
+
     --text3: #44444f;
+
     --accent: #6c63ff;
+
     --accent2: #a78bfa;
+
     --pink: #f472b6;
+
     --green: #22c55e;
+
     --red: #ef4444;
+
     --player-yellow: #ffb703;
+
     --player-cyan: #00d2ff;
+
   }
 
-  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  , ::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
   body {
+
     background: var(--bg);
+
     color: var(--text);
+
     font-family: 'Roboto', 'Open Sans', sans-serif;
+
     min-height: 100vh;
+
     overflow-x: hidden;
+
   }
 
   /* HEADER */
+
   header {
+
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
-    padding: 14px 24px;
+
+    padding: 12px 20px;
+
     border-bottom: 1px solid var(--border);
+
     background: rgba(8,8,9,0.96);
+
     backdrop-filter: blur(16px);
+
     position: sticky;
+
     top: 0;
+
     z-index: 100;
+
   }
 
   .logo-wrap { display: flex; flex-direction: column; gap: 1px; }
+
   .logo { display: flex; align-items: center; gap: 9px; font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; }
+
   .logo-icon {
-    width: 30px; height: 30px;
+
+    width: 28px; height: 28px;
+
     background: linear-gradient(135deg, var(--accent), var(--pink));
+
     border-radius: 8px;
+
     display: flex; align-items: center; justify-content: center;
-    font-size: 15px;
+
+    font-size: 14px;
+
   }
+
   .logo-tagline {
+
     font-size: 10px;
+
     background: linear-gradient(90deg, #60a5fa, #818cf8, #a78bfa);
+
     -webkit-background-clip: text;
+
     -webkit-text-fill-color: transparent;
+
     font-weight: 600;
-    padding-left: 39px;
+
+    padding-left: 37px;
+
   }
 
   .btn {
+
     border: none;
+
     font-family: inherit;
+
     font-size: 13px;
+
     font-weight: 500;
+
     padding: 8px 16px;
+
     border-radius: 8px;
+
     cursor: pointer;
+
     transition: all 0.15s;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 6px;
+
   }
-  .btn-ghost { background: none; color: var(--text2); border: 1px solid var(--border2); }
-  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+
+  .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+
+  .btn-ghost:hover { background: var(--border2); }
+
   .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+
   .btn-primary:hover { opacity: 0.88; }
 
   /* LAYOUT */
-  .layout { display: grid; grid-template-columns: 210px 1fr; min-height: calc(100vh - 60px); }
+
+  .layout { display: grid; grid-template-columns: 210px 1fr; min-height: calc(100vh - 56px); }
 
   aside {
+
     border-right: 1px solid var(--border);
-    padding: 18px 10px;
+
+    padding: 16px 10px;
+
     background: var(--surface);
+
     display: flex;
+
     flex-direction: column;
+
   }
 
   .upload-btn {
+
     width: 100%;
-    padding: 11px;
+
+    padding: 10px;
+
     background: linear-gradient(135deg, var(--accent), var(--pink));
+
     color: #fff;
+
     border: none;
-    border-radius: 10px;
+
+    border-radius: 8px;
+
     font-family: inherit;
+
     font-size: 13px;
+
     font-weight: 600;
+
     cursor: pointer;
-    margin-bottom: 20px;
-    display: flex; align-items: center; justify-content: center; gap: 7px;
+
+    margin-bottom: 18px;
+
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+
   }
 
   .sidebar-label {
+
     font-size: 10px;
+
     font-weight: 700;
+
     letter-spacing: 0.08em;
+
     color: var(--text3);
+
     text-transform: uppercase;
+
     padding: 0 8px;
+
     margin: 10px 0 4px;
+
   }
 
   .sidebar-item {
-    display: flex; align-items: center; gap: 9px;
+
+    display: flex; align-items: center; gap: 8px;
+
     padding: 8px 10px;
-    border-radius: 8px;
+
+    border-radius: 7px;
+
     cursor: pointer;
+
     font-size: 13px;
+
     font-weight: 500;
+
     color: var(--text2);
+
     transition: all 0.12s;
+
   }
+
   .sidebar-item:hover { background: var(--surface2); color: var(--text); }
+
   .sidebar-item.active { background: rgba(108,99,255,0.12); color: var(--accent); }
+
   .sidebar-count {
+
     margin-left: auto;
+
     font-size: 10px;
+
     font-family: 'DM Mono', monospace;
+
     color: var(--text3);
+
     background: var(--surface2);
+
     padding: 1px 6px;
+
     border-radius: 99px;
+
   }
 
   .storage-widget {
+
     margin-top: auto;
-    padding: 14px;
+
+    padding: 12px;
+
     background: var(--surface2);
-    border-radius: 10px;
+
+    border-radius: 8px;
+
     border: 1px solid var(--border);
+
   }
-  .storage-label { font-size: 11px; color: var(--text2); margin-bottom: 8px; display: flex; justify-content: space-between; }
+
+  .storage-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; display: flex; justify-content: space-between; }
+
   .storage-bar { height: 4px; background: var(--border2); border-radius: 99px; overflow: hidden; margin-bottom: 6px; }
+
   .storage-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--pink)); width: 0%; transition: width 0.6s ease; }
+
   .storage-detail { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; }
 
-  main { padding: 20px 24px; overflow-y: auto; }
+  main { padding: 18px 22px; overflow-y: auto; }
 
   .drop-zone {
+
     border: 1.5px dashed var(--border2);
+
     border-radius: 12px;
-    padding: 32px 20px;
+
+    padding: 28px 18px;
+
     text-align: center;
+
     margin-bottom: 20px;
+
     cursor: pointer;
+
     transition: all 0.2s;
+
   }
+
   .drop-zone:hover { border-color: var(--accent); background: rgba(108,99,255,0.03); }
-  .drop-icon { font-size: 32px; margin-bottom: 8px; display: block; }
-  .drop-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+
+  .drop-icon { font-size: 30px; margin-bottom: 6px; display: block; }
+
+  .drop-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+
   .drop-sub { font-size: 12px; color: var(--text2); }
+
   .drop-sub span { color: var(--accent); }
+
   .drop-meta { font-size: 10px; color: var(--text3); margin-top: 6px; font-family: 'DM Mono', monospace; }
+
   #fileInput { display: none; }
 
   .upload-progress {
+
     display: none;
+
     background: var(--surface);
+
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
+
+    border-radius: 8px;
+
+    padding: 12px 14px;
+
     margin-bottom: 16px;
+
   }
+
   .progress-header { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; color: var(--text2); }
+
   .progress-bar-wrap { height: 4px; background: var(--border2); border-radius: 99px; overflow: hidden; }
+
   .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--pink)); width: 0%; transition: width 0.1s linear; }
 
   .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+
   .toolbar-left { display: flex; align-items: center; gap: 8px; }
+
   .toolbar h2 { font-size: 15px; font-weight: 700; font-family: 'Syne', sans-serif; }
+
   .file-count { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; background: var(--surface2); padding: 2px 8px; border-radius: 99px; }
+
   .toolbar-right { display: flex; gap: 6px; align-items: center; }
 
   .search-box {
+
     background: var(--surface);
+
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 7px 12px;
+
+    border-radius: 7px;
+
+    padding: 7px 11px;
+
     font-family: inherit;
+
     font-size: 12px;
+
     color: var(--text);
+
     outline: none;
-    width: 170px;
+
+    width: 160px;
+
   }
-  .view-toggle { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+
+  .view-toggle { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+
   .view-toggle button { background: none; border: none; padding: 6px 10px; cursor: pointer; color: var(--text3); font-size: 13px; }
+
   .view-toggle button.active { background: var(--surface2); color: var(--text); }
 
-  .file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
-  .file-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.15s;
-    position: relative;
+  /* FIXED FILE GRID (DESKTOP & MOBILE) */
+
+  .file-grid {
+
+    display: grid;
+
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+
+    gap: 12px;
+
   }
+
+  .file-card {
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    transition: all 0.15s;
+
+    position: relative;
+
+    overflow: hidden;
+
+    display: flex;
+
+    flex-direction: column;
+
+  }
+
   .file-card:hover { border-color: var(--border2); transform: translateY(-2px); }
 
   .file-thumb {
+
     width: 100%;
+
     aspect-ratio: 16/10;
+
     background: var(--surface2);
+
     display: flex; align-items: center; justify-content: center;
+
     position: relative;
+
     overflow: hidden;
-    border-radius: 10px 10px 0 0;
+
   }
+
   .file-thumb video, .file-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
   .play-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; }
+
   .file-card:hover .play-overlay { opacity: 1; }
+
   .play-btn { width: 34px; height: 34px; background: rgba(255,255,255,0.92); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #000; font-size: 13px; }
+
   .file-type-badge { position: absolute; top: 6px; left: 6px; background: rgba(0,0,0,0.7); font-size: 9px; font-family: 'DM Mono', monospace; padding: 2px 5px; border-radius: 4px; color: var(--text2); }
 
   .card-menu-btn {
+
     background: var(--surface2);
+
     border: 1px solid var(--border2);
+
     border-radius: 5px;
+
     color: var(--text2);
+
     cursor: pointer;
-    font-size: 15px;
+
+    font-size: 14px;
+
     padding: 1px 5px;
+
     line-height: 1;
+
   }
+
   .card-dropdown {
+
     position: fixed;
+
     background: #18181c;
+
     border: 1px solid var(--border2);
+
     border-radius: 8px;
+
     padding: 4px;
+
     z-index: 9999;
-    min-width: 160px;
+
+    min-width: 155px;
+
     box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+
     display: none;
+
   }
+
   .card-dropdown.open { display: block; }
+
   .dropdown-item {
+
     display: flex; align-items: center; gap: 8px;
+
     padding: 7px 10px;
+
     border-radius: 6px;
+
     cursor: pointer;
+
     font-size: 12px;
+
     color: var(--text2);
+
     border: none; background: none; width: 100%; text-align: left; font-family: inherit;
+
   }
+
   .dropdown-item:hover { background: var(--surface2); color: var(--text); }
+
   .dropdown-item.danger:hover { color: var(--red); }
 
   .file-info { padding: 8px 10px; }
+
   .file-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+
   .file-meta { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; display: flex; justify-content: space-between; }
 
   /* LIST VIEW */
+
   .file-list { display: flex; flex-direction: column; gap: 2px; }
+
   .file-row {
+
     display: grid; grid-template-columns: 24px 1fr 70px 80px 100px 80px;
+
     align-items: center; gap: 10px;
+
     padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;
+
   }
+
   .file-row:hover { background: var(--surface); }
+
   .file-row-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
   .file-row-type { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); }
+
   .file-row-size { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text2); }
+
   .file-row-date { font-size: 11px; color: var(--text3); }
+
   .file-row-actions { display: flex; gap: 4px; justify-content: flex-end; opacity: 0; }
+
   .file-row:hover .file-row-actions { opacity: 1; }
+
   .row-btn { background: none; border: 1px solid var(--border2); border-radius: 4px; color: var(--text2); font-size: 11px; padding: 2px 6px; cursor: pointer; }
 
   /* ==========================================================================
-     CINEMA STREAMING MODAL & ANIKOTO LAYOUT
+
+     CLEAN VIDEO MODAL & PRO PLAYER
+
      ========================================================================== */
+
   .modal-overlay {
+
     position: fixed; inset: 0;
+
     background: rgba(0,0,0,0.92);
+
     backdrop-filter: blur(12px);
+
     z-index: 200;
+
     display: none;
+
     align-items: center; justify-content: center;
+
     padding: 12px;
+
   }
+
   .modal-overlay.open { display: flex; }
 
   .modal {
+
     background: #0d0d10;
+
     border: 1px solid #22222a;
+
     border-radius: 12px;
+
     width: 100%;
-    max-width: 860px;
+
+    max-width: 820px;
+
     overflow: hidden;
+
     box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+
   }
 
   .modal-header {
+
     display: flex; align-items: center; justify-content: space-between;
+
     padding: 10px 14px;
+
     border-bottom: 1px solid #1c1c24;
+
     background: #111116;
+
   }
+
   .modal-title { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; overflow: hidden; }
+
   .modal-title span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
   .modal-close { background: none; border: none; color: #888898; font-size: 16px; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+
   .modal-close:hover { color: #fff; background: #22222c; }
 
   .video-container {
+
     background: #000;
+
     width: 100%;
+
     aspect-ratio: 16/9;
+
     display: flex; align-items: center; justify-content: center;
+
     position: relative;
+
     overflow: hidden;
+
   }
 
-  /* Player Elements */
   .cv-player { position: relative; width: 100%; height: 100%; background: #000; overflow: hidden; user-select: none; }
+
   .cv-player video { width: 100%; height: 100%; object-fit: contain; display: block; }
 
   .cv-center-play-overlay {
+
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+
     pointer-events: none; z-index: 5; transition: opacity 0.2s;
+
   }
+
   .cv-center-play-btn {
-    width: 64px; height: 64px;
+
+    width: 60px; height: 60px;
+
     background: rgba(255, 255, 255, 0.95);
+
     clip-path: polygon(25% 15%, 25% 85%, 85% 50%);
+
     filter: drop-shadow(0 4px 16px rgba(0,0,0,0.7));
+
   }
+
   .cv-player.playing .cv-center-play-overlay { opacity: 0; }
 
   .cv-subtitles-box {
-    position: absolute; bottom: 55px; left: 50%; transform: translateX(-50%);
+
+    position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
+
     text-align: center; pointer-events: none; z-index: 10;
-    font-size: 16px; color: #fff; background: rgba(0,0,0,0.6);
+
+    font-size: 15px; color: #fff; background: rgba(0,0,0,0.6);
+
     padding: 3px 10px; border-radius: 4px; display: none;
+
   }
 
   .cv-controls {
+
     position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
+
     opacity: 0; transition: opacity 0.2s ease; pointer-events: none; z-index: 15;
+
   }
+
   .cv-controls.visible { opacity: 1; pointer-events: all; }
 
   .cv-bottom {
+
     background: linear-gradient(0deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
-    padding: 24px 12px 8px;
+
+    padding: 22px 12px 8px;
+
     display: flex; flex-direction: column; gap: 6px;
+
   }
 
   /* Timeline */
+
   .cv-prog-wrap { position: relative; height: 14px; display: flex; align-items: center; cursor: pointer; }
+
   .cv-prog-track { position: absolute; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.25); border-radius: 2px; }
+
   .cv-prog-buf { position: absolute; height: 100%; width: 0%; background: rgba(255,255,255,0.4); border-radius: 2px; }
+
   .cv-prog-fill { position: absolute; height: 100%; width: 0%; background: var(--player-yellow); border-radius: 2px; }
+
   .cv-prog-fill::after {
+
     content: ''; position: absolute; right: 0; top: -1px; bottom: -1px; width: 5px;
+
     background: var(--player-cyan); box-shadow: 0 0 6px var(--player-cyan);
+
   }
+
   .cv-time-tip {
+
     position: absolute; bottom: 18px; transform: translateX(-50%);
+
     background: #111; color: #fff; font-size: 10px; font-family: 'DM Mono', monospace;
+
     padding: 2px 6px; border-radius: 3px; border: 1px solid var(--border2);
+
     pointer-events: none; opacity: 0; white-space: nowrap;
+
   }
+
   .cv-prog-wrap:hover .cv-time-tip { opacity: 1; }
 
-  /* Control buttons */
   .cv-btn-row { display: flex; align-items: center; justify-content: space-between; }
+
   .cv-btn-group { display: flex; align-items: center; gap: 4px; }
+
   .cv-btn {
+
     background: none; border: none; color: #e0e0e8; cursor: pointer;
+
     padding: 5px; border-radius: 5px; display: flex; align-items: center; justify-content: center;
+
   }
+
   .cv-btn:hover { color: #fff; background: rgba(255,255,255,0.14); }
+
   .cv-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
   .cv-time { font-size: 11px; color: #ccc; font-family: 'Roboto', sans-serif; white-space: nowrap; padding-left: 2px; }
 
-  /* Fixed 10s SVGs */
+  /* FIXED ZERO-OVERLAP 10S SKIP SVGS */
+
   .cv-skip-btn {
-    position: relative; width: 28px; height: 28px;
-    display: flex; align-items: center; justify-content: center;
-    background: none; border: none; color: #fff; cursor: pointer;
+
+    background: none; border: none; color: #e0e0e8; cursor: pointer;
+
+    padding: 3px; border-radius: 5px; display: flex; align-items: center; justify-content: center;
+
   }
-  .cv-skip-btn svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.8; }
-  .cv-skip-btn span {
-    position: absolute; font-size: 8.5px; font-weight: 700;
-    font-family: 'Roboto', sans-serif; top: 52%; left: 50%; transform: translate(-50%, -50%);
-    color: #fff;
-  }
+
+  .cv-skip-btn:hover { color: #fff; background: rgba(255,255,255,0.14); }
+
+  .cv-skip-btn svg { width: 22px; height: 22px; display: block; }
 
   .cv-cc-badge { font-size: 10px; font-weight: 700; border: 1.5px solid currentColor; padding: 0 3px; border-radius: 3px; line-height: 1.1; }
+
   .cv-cc-badge.active { background: #fff; color: #000; }
 
-  /* AniKoto Style Feature Strip */
-  .anikoto-strip {
-    background: #111116;
-    padding: 10px 14px;
-    border-top: 1px solid #1c1c24;
-    display: flex; flex-direction: column; gap: 8px;
-  }
-  .anikoto-toggles {
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 8px; font-size: 12px; color: #a0a0b0;
-  }
-  .an-toggle { display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
-  .an-toggle input { display: none; }
-  .an-box { width: 12px; height: 12px; border-radius: 2px; border: 1px solid #444452; display: flex; align-items: center; justify-content: center; font-size: 9px; }
-  .an-toggle input:checked + .an-box { background: var(--player-yellow); border-color: var(--player-yellow); color: #000; }
-  .an-toggle.active { color: var(--player-yellow); }
+  /* Settings Modal */
 
-  .anikoto-nav {
-    display: flex; align-items: center; justify-content: space-between;
-    padding-top: 6px; border-top: 1px solid #181820; font-size: 12px;
-  }
-  .an-nav-left { display: flex; gap: 12px; }
-  .an-btn { background: none; border: none; color: #b0b0c0; cursor: pointer; display: flex; align-items: center; gap: 4px; font-family: inherit; font-size: 12px; }
-  .an-btn:hover { color: #fff; }
-
-  /* Settings Modal Inside Player */
   .cv-pro-settings-modal {
-    position: absolute; bottom: 50px; right: 12px; width: 270px;
+
+    position: absolute; bottom: 46px; right: 10px; width: 260px;
+
     background: #141418; border: 1px solid #24242e; border-radius: 8px;
+
     box-shadow: 0 10px 30px rgba(0,0,0,0.9); z-index: 30; display: none;
+
     font-family: 'Roboto', sans-serif;
+
   }
+
   .cv-pro-settings-modal.open { display: block; }
+
   .cv-set-tabs { display: flex; background: #0d0d10; border-bottom: 1px solid #202028; }
+
   .cv-set-tab {
+
     flex: 1; background: none; border: none; color: #707080; padding: 8px 0;
+
     cursor: pointer; display: flex; align-items: center; justify-content: center;
+
   }
+
   .cv-set-tab.active { color: #fff; border-bottom: 2px solid #fff; }
+
   .cv-set-tab svg { width: 16px; height: 16px; fill: currentColor; }
+
   .cv-set-close { background: none; border: none; color: #707080; padding: 8px 10px; cursor: pointer; }
+
   .cv-set-close:hover { color: #fff; }
 
-  .cv-set-content { padding: 8px 0; max-height: 200px; overflow-y: auto; font-size: 12px; }
+  .cv-set-content { padding: 8px 0; max-height: 190px; overflow-y: auto; font-size: 12px; }
+
   .cv-set-pane { display: none; }
+
   .cv-set-pane.active { display: block; }
+
   .cv-pane-item { padding: 8px 14px; color: #b0b0be; cursor: pointer; display: flex; align-items: center; }
+
   .cv-pane-item:hover { background: #1c1c24; color: #fff; }
+
   .cv-pane-item.selected { color: #fff; font-weight: 600; }
+
   .cv-pane-item.selected::before { content: '•'; margin-right: 6px; font-size: 14px; }
 
-  /* Modal Footer Details & Actions */
-  .modal-footer {
-    padding: 12px 14px; display: flex; gap: 8px; align-items: center;
-    justify-content: space-between; border-top: 1px solid #1c1c24; background: #0d0d10;
+  /* Action Area Under Modal */
+
+  .modal-action-bar {
+
+    padding: 12px 14px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 12px;
+
+    background: #0d0d10;
+
+    border-top: 1px solid #1c1c24;
+
   }
-  .modal-file-info { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+  .modal-file-details {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 2px;
+
+    font-size: 11px;
+
+    color: var(--text3);
+
+    font-family: 'DM Mono', monospace;
+
+  }
+
+  .modal-action-btns {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+  }
 
   .toast {
+
     position: fixed; bottom: 20px; right: 20px; background: var(--surface);
+
     border: 1px solid var(--border2); border-radius: 8px; padding: 10px 14px;
+
     font-size: 12px; z-index: 300; display: flex; align-items: center; gap: 8px;
+
     box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+
   }
+
   .toast.hidden { display: none; }
 
   .empty-state { text-align: center; padding: 48px 20px; color: var(--text3); }
+
   .branding { text-align: center; padding: 16px; font-size: 11px; color: var(--text3); border-top: 1px solid var(--border); }
 
   .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 6px; color: var(--text2); }
+
   .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 299; }
+
   .sidebar-overlay.open { display: block; }
+
   aside.mobile-open { display: flex !important; position: fixed; top: 0; left: 0; width: 250px; height: 100vh; z-index: 300; }
 
   @media (max-width: 768px) {
+
     .hamburger { display: block; }
+
     .layout { grid-template-columns: 1fr; }
+
     aside { display: none; }
+
     main { padding: 12px; }
-    .file-grid { grid-template-columns: repeat(2, 1fr); }
-    .cv-pro-settings-modal { width: 92%; right: 4%; bottom: 50px; }
-    .anikoto-toggles { font-size: 11px; }
+
+    .file-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+
+    .cv-pro-settings-modal { width: 92%; right: 4%; bottom: 46px; }
+
+    .modal-action-bar { flex-direction: column; align-items: stretch; gap: 10px; }
+
+    .modal-action-btns { display: grid; grid-template-columns: 1fr 1fr; }
+
   }
 
-  /* MODALS FOR SETTINGS, ANALYTICS, RENAME, DELETE */
+  /* Modals */
+
   .settings-overlay {
+
     position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+
     backdrop-filter: blur(6px); z-index: 400; display: none;
+
     align-items: center; justify-content: center; padding: 16px;
+
   }
+
   .settings-overlay.open { display: flex; }
+
   .settings-modal {
+
     background: var(--surface); border: 1px solid var(--border2);
+
     border-radius: 12px; width: 100%; max-width: 440px; max-height: 85vh; overflow-y: auto;
+
   }
+
   .settings-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+
   .settings-section { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+
   .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
+
   .toggle { position: relative; width: 38px; height: 22px; }
+
   .toggle input { opacity: 0; width: 0; height: 0; }
+
   .toggle-track { position: absolute; inset: 0; background: var(--border2); border-radius: 99px; cursor: pointer; }
+
   .toggle input:checked ~ .toggle-track { background: var(--accent); }
+
   .toggle-thumb { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: transform 0.2s; }
+
   .toggle input:checked ~ .toggle-track .toggle-thumb { transform: translateX(16px); }
 
   #imgZoomControls { display: flex; }
+
   .zoomable-img { max-width: 100%; max-height: 70vh; object-fit: contain; cursor: zoom-in; display: block; margin: 0 auto; }
+
 </style>
+
 </head>
+
 <body>
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
 <header>
+
   <div style="display:flex;align-items:center;gap:10px;">
+
     <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+
     </button>
+
     <div class="logo-wrap">
+
       <div class="logo"><div class="logo-icon">☁</div>CloudVault</div>
+
       <div class="logo-tagline">Made by Muskan's Raj ji 💗</div>
+
     </div>
+
   </div>
 
   <div style="display:flex;align-items:center;gap:8px;">
+
     <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">↑ Upload</button>
+
     <button class="hamburger" style="display:flex;" onclick="openSettings()" title="Settings">
+
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+
     </button>
+
   </div>
+
 </header>
 
 <div class="layout">
+
   <aside>
+
     <button class="upload-btn" onclick="document.getElementById('fileInput').click()">↑ Upload Files</button>
+
     <div class="sidebar-label">Library</div>
+
     <div class="sidebar-item active" onclick="filterFiles('all',this)"><span class="icon">🗂</span> All Files <span class="sidebar-count" id="cnt-all">0</span></div>
+
     <div class="sidebar-item" onclick="filterFiles('video',this)"><span class="icon">🎬</span> Videos <span class="sidebar-count" id="cnt-video">0</span></div>
+
     <div class="sidebar-item" onclick="filterFiles('image',this)"><span class="icon">🖼</span> Images <span class="sidebar-count" id="cnt-image">0</span></div>
+
     <div class="sidebar-item" onclick="filterFiles('document',this)"><span class="icon">📄</span> Documents <span class="sidebar-count" id="cnt-document">0</span></div>
+
     <div class="sidebar-item" onclick="filterFiles('audio',this)"><span class="icon">🎵</span> Audio <span class="sidebar-count" id="cnt-audio">0</span></div>
-    <div class="sidebar-item" onclick="filterFiles('shared',this)"><span class="icon">🔗</span> Shared <span class="sidebar-count" id="cnt-shared">0</span></div>
+
+    <div class="sidebar-item" onclick="filterFiles('shared',this)" id="sidebarShared"><span class="icon">🔗</span> Shared <span class="sidebar-count" id="cnt-shared">0</span></div>
+
     <div class="sidebar-label">Analytics</div>
+
     <div class="sidebar-item" onclick="openAnalytics()"><span class="icon">📊</span> File Analytics</div>
+
     <div class="storage-widget">
+
       <div class="storage-label"><span>Storage</span><span id="storePct" style="color:var(--accent)">0%</span></div>
+
       <div class="storage-bar"><div class="storage-fill" id="storeFill"></div></div>
+
       <div class="storage-detail" id="storeDetail">0 B of 10 GB used</div>
+
     </div>
+
   </aside>
 
   <main>
+
     <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+
       <span class="drop-icon">☁</span>
+
       <div class="drop-title">Drop files here to upload</div>
+
       <div class="drop-sub">or <span>browse files</span> from your device</div>
+
       <div class="drop-meta">Supports: MP4, MKV, JPG, PNG, PDF, ZIP and more</div>
+
     </div>
+
     <input type="file" id="fileInput" multiple accept="*/*" onchange="handleFiles(this.files)">
 
     <div class="upload-progress" id="uploadProgress">
+
       <div class="progress-header"><span id="progressName">Uploading...</span><span id="progressPct">0%</span></div>
+
       <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
     </div>
 
     <div class="toolbar">
+
       <div class="toolbar-left"><h2>My Files</h2><span class="file-count" id="fileCountBadge">0 files</span></div>
+
       <div class="toolbar-right">
+
         <input class="search-box" type="text" placeholder="Search files..." oninput="searchFiles(this.value)">
+
         <div class="view-toggle">
+
           <button class="active" onclick="setView('grid',this)">⊞</button>
+
           <button onclick="setView('list',this)">≡</button>
+
         </div>
+
       </div>
+
     </div>
 
     <div id="fileArea"></div>
+
   </main>
+
 </div>
 
 <!-- MEDIA PREVIEW MODAL -->
+
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOverlay(event)">
+
   <div class="modal" onclick="event.stopPropagation()">
+
     <div class="modal-header">
+
       <div class="modal-title">
+
         <span id="modalIcon">🎬</span>
+
         <span id="modalTitle">filename.mp4</span>
+
       </div>
+
       <button class="modal-close" onclick="closeModal()">✕</button>
+
     </div>
+
     
+
     <div class="video-container" id="videoContainer"></div>
 
-    <!-- AniKoto Features Strip for Video Player -->
-    <div class="anikoto-strip" id="anikotoStrip" style="display:none;">
-      <div class="anikoto-toggles">
-        <label class="an-toggle"><input type="checkbox" id="chkAutoPlay" checked><span class="an-box">✓</span> Auto Play</label>
-        <label class="an-toggle"><input type="checkbox" id="chkAutoNext" checked><span class="an-box">✓</span> Auto Next</label>
-        <label class="an-toggle active"><input type="checkbox" id="chkAutoSkip" checked><span class="an-box" style="background:var(--player-yellow);color:#000;">■</span> Auto Skip</label>
-        <div class="an-toggle" onclick="toggleLightMode()">💡 Light</div>
-        <div class="an-toggle" onclick="showToast('Feedback logged')">⚠️</div>
-        <div class="an-toggle" onclick="showToast('Saved to bookmarks')">🔖</div>
+    <div class="modal-action-bar">
+
+      <div class="modal-file-details">
+
+        <span id="modalInfo">—</span>
+
+        <span id="modalDim" style="color:var(--text3)"></span>
+
       </div>
-      <div class="anikoto-nav">
-        <div class="an-nav-left">
-          <button class="an-btn" onclick="playPrevFile()">⏮ Prev</button>
-          <button class="an-btn" onclick="playNextFile()">Next ⏭</button>
+
+      <div class="modal-action-btns">
+
+        <div id="imgZoomControls" style="display:none;gap:4px;align-items:center;margin-right:4px;">
+
+          <button class="btn btn-ghost" style="padding:6px 10px;" onclick="imgZoom(-0.2)">−</button>
+
+          <span id="imgZoomPct" style="font-size:11px;color:var(--text2);min-width:32px;text-align:center;">100%</span>
+
+          <button class="btn btn-ghost" style="padding:6px 10px;" onclick="imgZoom(0.2)">+</button>
+
+          <button class="btn btn-ghost" style="padding:6px 10px;" onclick="imgZoomReset()">⟳</button>
+
         </div>
-        <button class="an-btn" onclick="shareCurrentFile()">👥 Watch2Gether</button>
+
+        <button class="btn btn-ghost" onclick="shareCurrentFile()">🔗 Copy Link</button>
+
+        <button class="btn btn-primary" onclick="downloadCurrentFile()">↓ Download</button>
+
       </div>
+
     </div>
 
-    <div class="modal-footer">
-      <div class="modal-file-info" id="modalInfo">—</div>
-      <div style="display:flex;gap:8px;">
-        <div id="imgZoomControls" style="display:none;gap:4px;align-items:center;">
-          <button class="btn btn-ghost" onclick="imgZoom(-0.2)">−</button>
-          <span id="imgZoomPct" style="font-size:11px;color:var(--text2);min-width:32px;text-align:center;">100%</span>
-          <button class="btn btn-ghost" onclick="imgZoom(0.2)">+</button>
-          <button class="btn btn-ghost" onclick="imgZoomReset()">⟳</button>
-        </div>
-        <button class="btn btn-ghost" onclick="shareCurrentFile()">🔗 Copy Link</button>
-        <button class="btn btn-primary" onclick="downloadCurrentFile()">↓ Download</button>
-      </div>
-    </div>
   </div>
+
 </div>
 
 <div class="toast hidden" id="toast"><span id="toastMsg">Done!</span></div>
+
 <div class="branding"><span>Made by Muskan's Raj ji 💗 — CloudVault</span></div>
 
 <script>
+
 const BACKEND_URL = 'https://cloudvault-backend-utgb.onrender.com';
-const MAX_STORAGE = 10 * 1024 * 1024 * 1024;
+
+const MAX_STORAGE = 10  1024  1024 * 1024;
 
 let files = [];
+
 let currentFilter = 'all';
+
 let currentView = 'grid';
+
 let currentFileIndex = null;
+
 let searchQuery = '';
 
 // ========== LOAD FILES ==========
+
 async function loadFiles() {
+
   const area = document.getElementById('fileArea');
+
   if (area) area.innerHTML = '<div class="empty-state">⏳ Loading files...</div>';
 
   try {
+
     const res = await fetch(BACKEND_URL + '/files');
+
     if (!res.ok) throw new Error('HTTP ' + res.status);
+
     const data = await res.json();
+
     files = data.map(f => ({
+
       id: f.id,
+
       name: f.name,
+
       size: f.size,
+
       type: f.type,
+
       ext: f.name.split('.').pop().toLowerCase() || '',
+
       category: f.category,
+
       url: f.public_url,
+
       date: new Date(f.created_at),
+
       views: f.views || 0,
+
       downloads: f.downloads || 0,
+
       shared: !!f.share_code,
+
       share_code: f.share_code
+
     }));
+
     renderFiles();
+
     updateStats();
+
   } catch(e) {
+
     if (area) area.innerHTML = '<div class="empty-state">⚠️ Server waking up... <br><button class="btn btn-primary" onclick="loadFiles()" style="margin-top:10px;">Retry</button></div>';
+
   }
+
 }
 
 function formatSize(b) {
+
   if (b < 1024) return b + ' B';
+
   if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+
   if (b < 1024*1024*1024) return (b/(1024*1024)).toFixed(1) + ' MB';
+
   return (b/(1024*1024*1024)).toFixed(2) + ' GB';
+
 }
 
 function formatDate(d) {
+
   return new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(d);
+
 }
 
 function updateStats() {
+
   const totalSize = files.reduce((a,f) => a + f.size, 0);
+
   document.getElementById('fileCountBadge').textContent = files.length + ' file' + (files.length !== 1 ? 's' : '');
+
   const pct = Math.min(100, (totalSize / MAX_STORAGE * 100));
+
   document.getElementById('storePct').textContent = pct.toFixed(1) + '%';
+
   document.getElementById('storeFill').style.width = pct + '%';
+
   document.getElementById('storeDetail').textContent = formatSize(totalSize) + ' of 10 GB used';
 
   ['video','image','document','audio'].forEach(cat => {
+
     const el = document.getElementById('cnt-' + cat);
+
     if (el) el.textContent = files.filter(f => f.category === cat).length;
+
   });
+
   document.getElementById('cnt-all').textContent = files.length;
+
   document.getElementById('cnt-shared').textContent = files.filter(f => f.shared).length;
+
 }
 
 function getFileEmoji(cat) {
+
   return {video:'🎬',image:'🖼',audio:'🎵',document:'📄',other:'📁'}[cat] || '📁';
+
 }
 
 // ========== UPLOAD ==========
+
 async function handleFiles(fileList) {
+
   const arr = Array.from(fileList);
+
   if (!arr.length) return;
 
   const prog = document.getElementById('uploadProgress');
+
   const bar = document.getElementById('progressBar');
+
   const pct = document.getElementById('progressPct');
+
   const name = document.getElementById('progressName');
 
   for (const f of arr) {
+
     prog.style.display = 'block';
+
     name.textContent = 'Uploading "' + f.name + '"';
+
     bar.style.width = '0%'; pct.textContent = '0%';
 
     try {
+
       const formData = new FormData();
+
       formData.append('file', f);
 
       const data = await new Promise((resolve, reject) => {
+
         const xhr = new XMLHttpRequest();
+
         xhr.open('POST', BACKEND_URL + '/upload');
+
         xhr.upload.onprogress = (e) => {
+
           if (e.lengthComputable) {
+
             const p = Math.round((e.loaded / e.total) * 95);
+
             bar.style.width = p + '%';
+
             pct.textContent = p + '%';
+
           }
+
         };
+
         xhr.onload = () => {
+
           bar.style.width = '100%'; pct.textContent = '100%';
+
           try { resolve(JSON.parse(xhr.responseText)); } catch(e) { reject(e); }
+
         };
+
         xhr.onerror = () => reject(new Error('Network error'));
+
         xhr.send(formData);
+
       });
 
       if (data.success) {
+
         files.unshift({
+
           id: data.file.id,
+
           name: data.file.name,
+
           size: data.file.size,
+
           type: data.file.type,
+
           ext: data.file.name.split('.').pop() || '',
+
           category: data.file.category,
+
           url: data.file.public_url,
+
           date: new Date(data.file.created_at),
+
           views: 0,
+
           shared: false,
+
           share_code: data.file.share_code
+
         });
+
         showToast('Uploaded: ' + data.file.name);
+
       }
+
     } catch(err) { showToast('Upload failed: ' + err.message); }
+
   }
 
   setTimeout(() => { prog.style.display = 'none'; }, 400);
+
   renderFiles();
+
   updateStats();
+
   document.getElementById('fileInput').value = '';
+
 }
 
 // ========== RENDER ==========
+
 function getFilteredFiles() {
+
   let f;
+
   if (currentFilter === 'all') f = files;
+
   else if (currentFilter === 'shared') f = files.filter(x => x.shared);
+
   else f = files.filter(x => x.category === currentFilter);
+
   if (searchQuery) f = f.filter(x => x.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
   return f;
+
 }
 
 function renderFiles() {
+
   const area = document.getElementById('fileArea');
+
   const filtered = getFilteredFiles();
 
   if (!filtered.length) {
+
     area.innerHTML = '<div class="empty-state"><h3>No files found</h3><p>Upload files to see them here</p></div>';
+
     return;
+
   }
 
   document.querySelectorAll('.card-dropdown').forEach(m => m.remove());
 
   if (currentView === 'grid') {
+
     area.innerHTML = '<div class="file-grid">' + filtered.map((f,i) => renderCard(f,i)).join('') + '</div>';
+
   } else {
+
     area.innerHTML = '<div class="file-list"><div class="list-header"><div></div><div>Name</div><div>Type</div><div>Size</div><div>Date</div><div></div></div>' + filtered.map((f,i) => renderRow(f,i)).join('') + '</div>';
+
   }
+
   document.querySelectorAll('#fileArea .card-dropdown').forEach(m => document.body.appendChild(m));
+
 }
 
 function renderCard(f, i) {
+
   let thumb = '<span style="font-size:28px">' + getFileEmoji(f.category) + '</span>';
+
   if (f.category === 'video') thumb = '<video src="' + f.url + '" muted preload="metadata" onloadedmetadata="this.currentTime=1"></video>';
+
   if (f.category === 'image') thumb = '<img src="' + f.url + '" alt="' + f.name + '" loading="lazy">';
 
   return '<div class="file-card" onclick="openFile(\'' + f.id + '\')">' +
+
     '<div class="file-thumb">' +
+
       thumb +
+
       (f.category==='video' ? '<div class="play-overlay"><div class="play-btn">▶</div></div>' : '') +
+
       '<span class="file-type-badge">' + f.ext + '</span>' +
+
       '<div class="card-dropdown" id="menu-' + f.id + '" data-id="' + f.id + '">' +
+
         '<button class="dropdown-item" onclick="event.stopPropagation();renameFile(\'' + f.id + '\');closeAllMenus()">✏️ Rename</button>' +
+
         '<button class="dropdown-item" onclick="event.stopPropagation();toggleVisibility(\'' + f.id + '\');closeAllMenus()">🌐 Toggle Visibility</button>' +
+
         '<button class="dropdown-item" onclick="event.stopPropagation();shareFile(\'' + f.id + '\');closeAllMenus()">🔗 Share Link</button>' +
+
         '<button class="dropdown-item" onclick="event.stopPropagation();downloadFile(\'' + f.id + '\');closeAllMenus()">↓ Download</button>' +
+
         '<button class="dropdown-item danger" onclick="event.stopPropagation();deleteFile(\'' + f.id + '\');closeAllMenus()">🗑 Delete</button>' +
+
       '</div>' +
+
     '</div>' +
+
     '<div class="file-info">' +
+
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">' +
+
         '<div class="file-name" title="' + f.name + '">' + f.name + '</div>' +
+
         '<button class="card-menu-btn" onclick="event.stopPropagation();toggleMenu(\'' + f.id + '\',this)">⋯</button>' +
+
       '</div>' +
+
       '<div class="file-meta"><span>' + formatSize(f.size) + '</span><span>' + formatDate(f.date).split(',')[0] + '</span></div>' +
+
     '</div>' +
+
   '</div>';
+
 }
 
 function renderRow(f, i) {
+
   return '<div class="file-row" onclick="openFile(\'' + f.id + '\')">' +
+
     '<div>' + getFileEmoji(f.category) + '</div>' +
+
     '<div class="file-row-name" title="' + f.name + '">' + f.name + '</div>' +
+
     '<div class="file-row-type">' + f.ext + '</div>' +
+
     '<div class="file-row-size">' + formatSize(f.size) + '</div>' +
+
     '<div class="file-row-date">' + formatDate(f.date) + '</div>' +
+
     '<div class="file-row-actions">' +
+
       '<button class="row-btn" onclick="event.stopPropagation();shareFile(\'' + f.id + '\')">🔗</button>' +
+
       '<button class="row-btn" onclick="event.stopPropagation();downloadFile(\'' + f.id + '\')">↓</button>' +
-      '<button class="row-btn" onclick="event.stopPropagation();deleteFile(\'' + f.id + '\')">✕</button>' +
+
+      '<button class="row-btn danger" onclick="event.stopPropagation();deleteFile(\'' + f.id + '\')">✕</button>' +
+
     '</div>' +
+
   '</div>';
+
 }
 
 function toggleMenu(id, btn) {
+
   closeAllMenus();
+
   const menu = document.getElementById('menu-' + id);
+
   if (!menu) return;
+
   const rect = btn.getBoundingClientRect();
-  menu.style.left = Math.max(8, rect.right - 160) + 'px';
+
+  menu.style.left = Math.max(8, rect.right - 155) + 'px';
+
   menu.style.top = Math.min(window.innerHeight - 150, rect.bottom + 4) + 'px';
+
   menu.classList.add('open');
+
 }
 
 function closeAllMenus() {
+
   document.querySelectorAll('.card-dropdown.open').forEach(m => m.classList.remove('open'));
+
 }
+
 document.addEventListener('click', () => closeAllMenus());
 
 // ========== PRO PLAYER BUILDER ==========
+
 function fmtTime(s) {
+
   if (!s || isNaN(s)) return '00:00';
+
   const m = Math.floor(s/60), sec = Math.floor(s%60);
+
   return m.toString().padStart(2,'0') + ':' + sec.toString().padStart(2,'0');
+
 }
 
 function buildPlayer(f) {
+
   return `
+
     <div class="cv-player" id="cvPlayer">
+
       <video id="cvVid" playsinline webkit-playsinline preload="auto">
+
         <source src="${f.url}" type="${f.type || 'video/mp4'}">
+
       </video>
 
       <div class="cv-center-play-overlay">
+
         <div class="cv-center-play-btn"></div>
+
       </div>
 
       <div class="cv-subtitles-box" id="cvSubtitles"></div>
 
       <!-- Settings Panel -->
+
       <div class="cv-pro-settings-modal" id="cvProSettings" onclick="event.stopPropagation()">
+
         <div class="cv-set-tabs">
+
           <button class="cv-set-tab active" data-pane="quality" onclick="cvSwitchPane('quality', this)" title="Quality">
+
             <svg viewBox="0 0 24 24"><path d="M2 17h3v4H2v-4zm6-5h3v9H8v-9zm6-5h3v14h-3V7zm6-5h3v19h-3V2z"/></svg>
+
           </button>
+
           <button class="cv-set-tab" data-pane="captions" onclick="cvSwitchPane('captions', this)" title="Captions">
+
             <span style="font-size:11px;font-weight:700;border:1.5px solid currentColor;padding:0 3px;border-radius:3px;">CC</span>
+
           </button>
+
           <button class="cv-set-tab" data-pane="speed" onclick="cvSwitchPane('speed', this)" title="Speed">
+
             <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 0 0 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+
           </button>
+
           <button class="cv-set-close" onclick="cvToggleSettings()">✕</button>
+
         </div>
 
         <div class="cv-set-content">
-          <!-- Dynamic Quality Tab -->
+
           <div class="cv-set-pane active" id="pane-quality">
+
             <div class="cv-pane-item selected" id="optAutoQuality">Auto <span id="autoResLabel" style="font-size:10px;color:#888;margin-left:4px;">(Detecting...)</span></div>
+
           </div>
 
-          <!-- Dynamic Captions Tab -->
           <div class="cv-set-pane" id="pane-captions">
+
             <div id="captionsList"><div class="cv-pane-item" style="color:#777;">Scanning tracks...</div></div>
+
           </div>
 
-          <!-- Speed Tab -->
           <div class="cv-set-pane" id="pane-speed">
+
             <div class="cv-pane-item" onclick="cvSetSpeed(0.25, this)">0.25x</div>
+
             <div class="cv-pane-item" onclick="cvSetSpeed(0.5, this)">0.5x</div>
+
             <div class="cv-pane-item" onclick="cvSetSpeed(0.75, this)">0.75x</div>
+
             <div class="cv-pane-item selected" onclick="cvSetSpeed(1, this)">1x (Normal)</div>
+
             <div class="cv-pane-item" onclick="cvSetSpeed(1.25, this)">1.25x</div>
+
             <div class="cv-pane-item" onclick="cvSetSpeed(1.5, this)">1.5x</div>
+
             <div class="cv-pane-item" onclick="cvSetSpeed(2, this)">2x</div>
+
           </div>
+
         </div>
+
       </div>
 
       <!-- Controls Overlay -->
+
       <div class="cv-controls visible" id="cvCtrl">
+
         <div class="cv-bottom">
+
           <div class="cv-prog-wrap" id="cvProg">
+
             <div class="cv-prog-track">
+
               <div class="cv-prog-buf" id="cvBuf"></div>
+
               <div class="cv-prog-fill" id="cvFill"></div>
+
             </div>
+
             <div class="cv-time-tip" id="cvTip">00:00</div>
+
           </div>
 
           <div class="cv-btn-row">
+
             <div class="cv-btn-group">
+
               <button class="cv-btn" id="cvPlayBtn" onclick="cvTogglePlay()" title="Play/Pause">
+
                 <svg id="cvPlayIco" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+
               </button>
+
               <button class="cv-btn" id="cvVolBtn" onclick="cvToggleMute()" title="Mute/Unmute">
+
                 <svg id="cvVolIco" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+
               </button>
+
               <span class="cv-time" id="cvTime">00:00 / 00:00</span>
+
             </div>
 
             <div class="cv-btn-group">
-              <!-- Rewind 10s -->
+
+              <!-- Rewind 10s Single-Path SVG (Zero Overlap) -->
+
               <button class="cv-skip-btn" onclick="cvSkip(-10)" title="Rewind 10s">
-                <svg viewBox="0 0 24 24">
-                  <path d="M12 5V1L7 6l5 5V7c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6H4c0 4.4 3.6 8 8 8s8-3.6 8-8-3.6-8-8-8z"/>
+
+                <svg viewBox="0 0 24 24" fill="currentColor">
+
+                  <path d="M12.5 3a9 9 0 1 0 8.7 6.7.75.75 0 0 0-1.46-.35A7.5 7.5 0 1 1 12.5 4.5H9.6l1.7-1.7a.75.75 0 0 0-1.06-1.06L6.97 4.97a.75.75 0 0 0 0 1.06l3.27 3.27a.75.75 0 0 0 1.06-1.06L9.6 6.5h2.9A9 9 0 0 0 12.5 3zm-2.8 8.2v5.6h1.2v-4.5l-.9.4-.3-.8 1.1-.7h.9zm3.8 0c-1 0-1.6.7-1.6 2v1.6c0 1.3.6 2 1.6 2s1.6-.7 1.6-2v-1.6c0-1.3-.6-2-1.6-2zm.4 3.7c0 .7-.2 1-.4 1s-.4-.3-.4-1v-1.8c0-.7.2-1 .4-1s.4.3.4 1v1.8z"/>
+
                 </svg>
-                <span>10</span>
+
               </button>
 
-              <!-- Forward 10s -->
+              <!-- Forward 10s Single-Path SVG (Zero Overlap) -->
+
               <button class="cv-skip-btn" onclick="cvSkip(10)" title="Forward 10s">
-                <svg viewBox="0 0 24 24">
-                  <path d="M12 5V1l5 5-5 5V7c-3.3 0-6 2.7-6 6s2.7 6 6 6 6-2.7 6-6h2c0 4.4-3.6 8-8 8s-8-3.6-8-8 3.6-8 8-8z"/>
+
+                <svg viewBox="0 0 24 24" fill="currentColor">
+
+                  <path d="M11.5 3a9 9 0 1 1-8.7 6.7.75.75 0 0 1 1.46-.35A7.5 7.5 0 1 0 11.5 4.5h2.9l-1.7-1.7a.75.75 0 0 1 1.06-1.06l3.27 3.27a.75.75 0 0 1 0 1.06l-3.27 3.27a.75.75 0 0 1-1.06-1.06l1.7-1.7h-2.9A9 9 0 0 1 11.5 3zm-2.8 8.2v5.6h1.2v-4.5l-.9.4-.3-.8 1.1-.7h.9zm3.8 0c-1 0-1.6.7-1.6 2v1.6c0 1.3.6 2 1.6 2s1.6-.7 1.6-2v-1.6c0-1.3-.6-2-1.6-2zm.4 3.7c0 .7-.2 1-.4 1s-.4-.3-.4-1v-1.8c0-.7.2-1 .4-1s.4.3.4 1v1.8z"/>
+
                 </svg>
-                <span>10</span>
+
               </button>
 
               <!-- CC Button -->
+
               <button class="cv-btn" id="cvCCBtn" onclick="cvToggleCC()" title="Captions">
+
                 <span class="cv-cc-badge">CC</span>
+
               </button>
 
               <!-- Settings -->
+
               <button class="cv-btn" onclick="cvToggleSettings()" title="Settings">
+
                 <svg viewBox="0 0 24 24"><path d="M19.4 13c.04-.3.07-.6.07-1s-.03-.7-.07-1l2.1-1.7c.2-.1.2-.4.1-.6l-2-3.5c-.1-.2-.4-.3-.6-.2l-2.5 1c-.5-.4-1.1-.7-1.7-1l-.4-2.6c0-.2-.2-.4-.5-.4h-4c-.3 0-.5.2-.5.4l-.4 2.6c-.6.3-1.2.6-1.7 1l-2.5-1c-.2-.1-.5 0-.6.2l-2 3.5c-.1.2 0 .5.1.6l2.1 1.7c-.04.3-.07.7-.07 1s.03.7.07 1l-2.1 1.7c-.2.1-.2.4-.1.6l2 3.5c.1.2.4.3.6.2l2.5-1c.5.4 1.1.7 1.7 1l.4 2.6c0 .2.2.4.5.4h4c.3 0 .5-.2.5-.4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1c.2.1.5 0 .6-.2l2-3.5c.1-.2 0-.5-.1-.6l-2.1-1.7zM12 15.5c-1.9 0-3.5-1.6-3.5-3.5s1.6-3.5 3.5-3.5 3.5 1.6 3.5 3.5-1.6 3.5-3.5 3.5z"/></svg>
+
               </button>
 
               <!-- PiP -->
+
               <button class="cv-btn" onclick="cvPiP()" title="Picture in Picture">
+
                 <svg viewBox="0 0 24 24"><path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.98h18v14.03z"/></svg>
+
               </button>
 
               <!-- Fullscreen -->
+
               <button class="cv-btn" onclick="cvFullscreen()" title="Fullscreen">
+
                 <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+
               </button>
+
             </div>
+
           </div>
+
         </div>
+
       </div>
+
     </div>
+
   `;
+
 }
 
 function initPlayer() {
+
   const vid = document.getElementById('cvVid');
+
   const player = document.getElementById('cvPlayer');
+
   const ctrl = document.getElementById('cvCtrl');
+
   const prog = document.getElementById('cvProg');
+
   if (!vid) return;
 
   vid.muted = false;
+
   vid.volume = 1.0;
 
-  // Auto-detect resolution on metadata load
   vid.addEventListener('loadedmetadata', () => {
+
     const resLabel = document.getElementById('autoResLabel');
+
     if (resLabel && vid.videoHeight) {
-      resLabel.textContent = `(${vid.videoWidth}x${vid.videoHeight} - ${vid.videoHeight >= 1080 ? '1080p' : vid.videoHeight >= 720 ? '720p' : vid.videoHeight + 'p'})`;
+
+      resLabel.textContent = (${vid.videoWidth}x${vid.videoHeight} - ${vid.videoHeight >= 1080 ? '1080p' : vid.videoHeight >= 720 ? '720p' : vid.videoHeight + 'p'});
+
     }
+
     detectEmbeddedSubtitles(vid);
+
   });
 
   let hideTimer;
+
   function showControls() {
+
     ctrl.classList.add('visible');
+
     player.style.cursor = 'default';
+
     clearTimeout(hideTimer);
+
     if (!vid.paused) {
+
       hideTimer = setTimeout(() => {
+
         ctrl.classList.remove('visible');
+
         player.style.cursor = 'none';
+
         const s = document.getElementById('cvProSettings');
+
         if (s) s.classList.remove('open');
+
       }, 2500);
+
     }
+
   }
 
   player.addEventListener('mousemove', showControls);
+
   player.addEventListener('mouseenter', showControls);
+
   player.addEventListener('touchstart', showControls, { passive: true });
 
   player.addEventListener('click', (e) => {
+
     if (e.target.closest('.cv-bottom') || e.target.closest('.cv-pro-settings-modal')) return;
+
     cvTogglePlay();
+
   });
 
   vid.addEventListener('play', () => {
+
     player.classList.add('playing');
+
     setPIcon(false);
+
     showControls();
+
   });
 
   vid.addEventListener('pause', () => {
+
     player.classList.remove('playing');
+
     setPIcon(true);
+
     ctrl.classList.add('visible');
+
     player.style.cursor = 'default';
+
   });
 
   vid.addEventListener('timeupdate', () => {
+
     const pct = (vid.currentTime / vid.duration * 100) || 0;
+
     document.getElementById('cvFill').style.width = pct + '%';
+
     document.getElementById('cvTime').textContent = fmtTime(vid.currentTime) + ' / ' + fmtTime(vid.duration);
+
   });
 
   vid.addEventListener('progress', () => {
+
     if (vid.buffered.length > 0) {
+
       const bufPct = (vid.buffered.end(vid.buffered.length - 1) / vid.duration * 100) || 0;
+
       document.getElementById('cvBuf').style.width = bufPct + '%';
+
     }
+
   });
 
   prog.addEventListener('click', e => {
+
     const rect = prog.getBoundingClientRect();
+
     const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+
     vid.currentTime = pct * vid.duration;
+
   });
 
   prog.addEventListener('mousemove', e => {
+
     const rect = prog.getBoundingClientRect();
+
     const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+
     const tip = document.getElementById('cvTip');
+
     tip.style.left = (pct * 100) + '%';
+
     tip.textContent = fmtTime(pct * vid.duration);
+
   });
 
-  // Start playback
   vid.play().catch(() => {
+
     vid.muted = true;
+
     vid.play().catch(() => {
+
       setPIcon(true);
+
     });
+
   });
+
 }
 
 function detectEmbeddedSubtitles(vid) {
+
   const container = document.getElementById('captionsList');
+
   if (!container) return;
 
   const tracks = vid.textTracks;
+
   if (!tracks || tracks.length === 0) {
+
     container.innerHTML = '<div class="cv-pane-item" style="color:#777;cursor:default;">No subtitles in this file</div>';
+
     return;
+
   }
 
   let html = '<div class="cv-pane-item selected" onclick="cvSelectTrack(-1, this)">Off</div>';
+
   for (let i = 0; i < tracks.length; i++) {
-    html += `<div class="cv-pane-item" onclick="cvSelectTrack(${i}, this)">${tracks[i].label || tracks[i].language || 'Track ' + (i + 1)}</div>`;
+
+    html += <div class="cv-pane-item" onclick="cvSelectTrack(${i}, this)">${tracks[i].label || tracks[i].language || 'Track ' + (i + 1)}</div>;
+
   }
+
   container.innerHTML = html;
+
 }
 
 window.cvSelectTrack = function(index, el) {
+
   const vid = document.getElementById('cvVid');
+
   if (!vid) return;
+
   const tracks = vid.textTracks;
+
   for (let i = 0; i < tracks.length; i++) {
+
     tracks[i].mode = (i === index) ? 'showing' : 'disabled';
+
   }
+
   document.querySelectorAll('#captionsList .cv-pane-item').forEach(i => i.classList.remove('selected'));
+
   if (el) el.classList.add('selected');
+
   const ccBtn = document.getElementById('cvCCBtn');
+
   if (ccBtn) {
+
     if (index === -1) ccBtn.querySelector('.cv-cc-badge').classList.remove('active');
+
     else ccBtn.querySelector('.cv-cc-badge').classList.add('active');
+
   }
+
   showToast(index === -1 ? 'Captions Off' : 'Subtitle track loaded');
+
 };
 
 function setPIcon(paused) {
+
   const ico = document.getElementById('cvPlayIco');
+
   if (!ico) return;
+
   ico.innerHTML = paused ? '<path d="M8 5v14l11-7z"/>' : '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+
 }
 
 window.cvTogglePlay = function() {
+
   const v = document.getElementById('cvVid');
+
   if (!v) return;
+
   if (v.muted) v.muted = false;
+
   v.paused ? v.play() : v.pause();
+
 };
 
 window.cvSkip = function(s) {
+
   const v = document.getElementById('cvVid');
+
   if (v) v.currentTime = Math.max(0, Math.min(v.duration || 0, v.currentTime + s));
+
 };
 
 window.cvToggleMute = function() {
+
   const v = document.getElementById('cvVid');
+
   if (!v) return;
+
   v.muted = !v.muted;
+
   const ico = document.getElementById('cvVolIco');
+
   if (ico) {
+
     ico.innerHTML = v.muted
+
       ? '<path d="M16.5 12c0-1.8-1-3.3-2.5-4v2.2l2.4 2.4c.1-.2.1-.4.1-.6zm2.5 0c0 .9-.2 1.8-.5 2.6l1.5 1.5c.6-1.3.9-2.7.9-4.1 0-4.3-3-7.9-7-8.8v2.1c2.9.9 5 3.5 5 6.7zM4.3 3L3 4.3 7.7 9H3v6h4l5 5v-6.7l4.3 4.3c-.7.5-1.4.9-2.3 1.2v2.1c1.4-.3 2.6-1 3.7-1.8L19.7 21 21 19.7l-9-9L4.3 3zM12 4L9.9 6.1 12 8.2V4z"/>'
+
       : '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.8-1-3.3-2.5-4v8c1.5-.7 2.5-2.2 2.5-4zM14 3.2v2.1c2.9.9 5 3.5 5 6.7s-2.1 5.8-5 6.7v2.1c4-.9 7-4.5 7-8.8s-3-7.9-7-8.8z"/>';
+
   }
+
 };
 
 window.cvToggleSettings = function() {
+
   const m = document.getElementById('cvProSettings');
+
   if (m) m.classList.toggle('open');
+
 };
 
 window.cvSwitchPane = function(paneId, btn) {
+
   document.querySelectorAll('.cv-set-pane').forEach(p => p.classList.remove('active'));
+
   document.querySelectorAll('.cv-set-tab').forEach(t => t.classList.remove('active'));
+
   const target = document.getElementById('pane-' + paneId);
+
   if (target) target.classList.add('active');
+
   if (btn) btn.classList.add('active');
+
 };
 
 window.cvSetSpeed = function(speed, el) {
+
   const v = document.getElementById('cvVid');
+
   if (v) v.playbackRate = speed;
+
   document.querySelectorAll('#pane-speed .cv-pane-item').forEach(i => i.classList.remove('selected'));
+
   if (el) el.classList.add('selected');
+
   showToast('Speed: ' + speed + 'x');
+
 };
 
 window.cvToggleCC = function() {
+
   const vid = document.getElementById('cvVid');
+
   if (!vid || !vid.textTracks || vid.textTracks.length === 0) {
+
     showToast('No embedded subtitles in this file');
+
     return;
+
   }
+
   cvSwitchPane('captions', document.querySelector('.cv-set-tab[data-pane="captions"]'));
+
   cvToggleSettings();
+
 };
 
 window.cvPiP = async function() {
+
   const v = document.getElementById('cvVid');
+
   if (!v) return;
+
   try {
+
     if (document.pictureInPictureElement) await document.exitPictureInPicture();
+
     else await v.requestPictureInPicture();
+
   } catch(e) { showToast('PiP not supported'); }
+
 };
 
 window.cvFullscreen = function() {
+
   const p = document.getElementById('cvPlayer');
+
   if (!p) return;
+
   if (document.fullscreenElement) document.exitFullscreen();
+
   else p.requestFullscreen().catch(()=>{});
+
 };
 
-function toggleLightMode() {
-  document.body.style.background = document.body.style.background === 'rgb(240, 240, 245)' ? '#080809' : '#f0f0f5';
-}
-
-function playPrevFile() {
-  const videos = files.filter(f => f.category === 'video');
-  if (!videos.length) return;
-  const currIdx = videos.findIndex(f => f.id == currentFileIndex);
-  if (currIdx > 0) openFile(videos[currIdx - 1].id);
-  else showToast('First video');
-}
-
-function playNextFile() {
-  const videos = files.filter(f => f.category === 'video');
-  if (!videos.length) return;
-  const currIdx = videos.findIndex(f => f.id == currentFileIndex);
-  if (currIdx !== -1 && currIdx < videos.length - 1) openFile(videos[currIdx + 1].id);
-  else showToast('No next video');
-}
-
 // ========== OPEN FILE ==========
+
 function openFile(id) {
+
   const f = files.find(x => x.id == id);
+
   if (!f) return;
+
   currentFileIndex = id;
+
   f.views = (f.views||0) + 1;
+
   updateStats();
 
   document.getElementById('modalTitle').textContent = f.name;
+
   document.getElementById('modalIcon').textContent = getFileEmoji(f.category);
+
   document.getElementById('modalInfo').textContent = f.ext.toUpperCase() + ' · ' + formatSize(f.size) + ' · ' + formatDate(f.date);
 
   const container = document.getElementById('videoContainer');
-  const anikotoStrip = document.getElementById('anikotoStrip');
+
   const imgZoom = document.getElementById('imgZoomControls');
+
   if (imgZoom) imgZoom.style.display = 'none';
 
   if (f.category === 'video') {
-    if (anikotoStrip) anikotoStrip.style.display = 'flex';
+
     container.innerHTML = buildPlayer(f);
+
     initPlayer();
+
+  } else if (f.category === 'image') {
+
+    if (imgZoom) imgZoom.style.display = 'flex';
+
+    imgZoomReset();
+
+    container.innerHTML = '<img class="zoomable-img" src="' + f.url + '" alt="' + f.name + '" onclick="imgZoom(0.2)">';
+
+  } else if (f.category === 'audio') {
+
+    container.innerHTML = '<div class="video-placeholder" style="gap:12px"><span style="font-size:44px">🎵</span><p>' + f.name + '</p><audio src="' + f.url + '" controls style="width:280px;"></audio></div>';
+
   } else {
-    if (anikotoStrip) anikotoStrip.style.display = 'none';
-    if (f.category === 'image') {
-      if (imgZoom) imgZoom.style.display = 'flex';
-      imgZoomReset();
-      container.innerHTML = '<img class="zoomable-img" src="' + f.url + '" alt="' + f.name + '" onclick="imgZoom(0.2)">';
-    } else if (f.category === 'audio') {
-      container.innerHTML = '<div class="video-placeholder" style="gap:12px"><span style="font-size:44px">🎵</span><p>' + f.name + '</p><audio src="' + f.url + '" controls style="width:280px;"></audio></div>';
-    } else {
-      container.innerHTML = '<div class="video-placeholder"><span>' + getFileEmoji(f.category) + '</span><p>No preview available</p><a href="' + f.url + '" target="_blank" style="color:var(--accent);font-size:12px;margin-top:10px;padding:6px 14px;border:1px solid var(--accent);border-radius:6px;text-decoration:none;">↓ Download file</a></div>';
-    }
+
+    container.innerHTML = '<div class="video-placeholder"><span>' + getFileEmoji(f.category) + '</span><p>No preview available</p><a href="' + f.url + '" target="_blank" style="color:var(--accent);font-size:12px;margin-top:10px;padding:6px 14px;border:1px solid var(--accent);border-radius:6px;text-decoration:none;">↓ Download file</a></div>';
+
   }
 
   document.getElementById('modalOverlay').classList.add('open');
+
 }
 
 function closeModalOverlay(e) {
+
   if (e.target === document.getElementById('modalOverlay')) closeModal();
+
 }
 
 window.closeModal = function() {
+
   document.getElementById('modalOverlay').classList.remove('open');
+
   const v = document.getElementById('cvVid');
+
   if (v) v.pause();
+
   document.getElementById('videoContainer').innerHTML = '';
+
   currentFileIndex = null;
+
 };
 
 // ========== ACTIONS ==========
+
 function shareFile(id) {
+
   const f = files.find(x => x.id == id);
+
   if (!f) return;
+
   f.shared = true;
+
   const url = window.location.origin + '/share.html?f=' + (f.share_code || f.id);
+
   navigator.clipboard.writeText(url).catch(()=>{});
+
   showToast('Share link copied!');
+
   updateStats();
+
 }
 
 function shareCurrentFile() { if (currentFileIndex) shareFile(currentFileIndex); }
 
 async function downloadFile(id) {
+
   const f = files.find(x => x.id == id);
+
   if (!f) return;
+
   showToast('Downloading...');
+
   try {
+
     const res = await fetch(f.url);
+
     const blob = await res.blob();
+
     const blobUrl = URL.createObjectURL(blob);
+
     const a = document.createElement('a');
+
     a.href = blobUrl; a.download = f.name;
+
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
+
     setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+
   } catch(e) {
+
     const a = document.createElement('a');
+
     a.href = f.url; a.download = f.name; a.target = '_blank'; a.click();
+
   }
+
 }
 
 function downloadCurrentFile() { if (currentFileIndex) downloadFile(currentFileIndex); }
 
 function filterFiles(cat, el) {
+
   currentFilter = cat;
+
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+
   if (el) el.classList.add('active');
+
   renderFiles();
+
 }
 
 function setView(v, btn) {
+
   currentView = v;
+
   document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+
   if (btn) btn.classList.add('active');
+
   renderFiles();
+
 }
 
 function searchFiles(q) { searchQuery = q; renderFiles(); }
 
 function showToast(msg) {
+
   const t = document.getElementById('toast');
+
   document.getElementById('toastMsg').textContent = msg;
+
   t.classList.remove('hidden');
+
   setTimeout(() => t.classList.add('hidden'), 2500);
+
 }
 
 const dz = document.getElementById('dropZone');
+
 document.body.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+
 document.body.addEventListener('dragleave', e => { if (!e.relatedTarget) dz.classList.remove('drag-over'); });
+
 document.body.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); handleFiles(e.dataTransfer.files); });
+
 document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeModal(); });
 
 function toggleSidebar() {
+
   document.querySelector('aside').classList.toggle('mobile-open');
+
   document.getElementById('sidebarOverlay').classList.toggle('open');
-}
-function closeSidebar() {
-  document.querySelector('aside').classList.remove('mobile-open');
-  document.getElementById('sidebarOverlay').classList.remove('open');
+
 }
 
-// Settings modal
+function closeSidebar() {
+
+  document.querySelector('aside').classList.remove('mobile-open');
+
+  document.getElementById('sidebarOverlay').classList.remove('open');
+
+}
+
 function openSettings() { document.getElementById('settingsOverlay').classList.add('open'); }
+
 function closeSettings() { document.getElementById('settingsOverlay').classList.remove('open'); }
+
 function openAnalytics() { document.getElementById('analyticsOverlay').classList.add('open'); if (window.innerWidth <= 768) closeSidebar(); }
+
 function closeAnalytics() { document.getElementById('analyticsOverlay').classList.remove('open'); }
 
-// Image Zoom
 let _imgScale = 1;
+
 function imgZoom(delta) {
-  _imgScale = Math.min(4, Math.max(0.2, _imgScale + delta));
+
+  imgScale = Math.min(4, Math.max(0.2, imgScale + delta));
+
   const img = document.querySelector('.zoomable-img');
+
   if (img) img.style.transform = 'scale(' + _imgScale + ')';
+
   document.getElementById('imgZoomPct').textContent = Math.round(_imgScale * 100) + '%';
+
 }
+
 function imgZoomReset() {
+
   _imgScale = 1;
+
   const img = document.querySelector('.zoomable-img');
+
   if (img) img.style.transform = 'scale(1)';
+
   document.getElementById('imgZoomPct').textContent = '100%';
+
 }
 
 loadFiles();
+
 </script>
+
 </body>
+
 </html>
+
 
