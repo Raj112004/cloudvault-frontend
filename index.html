@@ -235,11 +235,11 @@
     position: relative;
     overflow: hidden;
   }
-  .file-thumb video, .file-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .file-thumb video, .file-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .play-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; }
   .file-card:hover .play-overlay { opacity: 1; }
   .play-btn { width: 34px; height: 34px; background: rgba(255,255,255,0.92); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #000; font-size: 13px; }
-  .file-type-badge { position: absolute; top: 6px; left: 6px; background: rgba(0,0,0,0.7); font-size: 9px; font-family: 'DM Mono', monospace; padding: 2px 5px; border-radius: 4px; color: var(--text2); }
+  .file-type-badge { position: absolute; top: 6px; left: 6px; background: rgba(0,0,0,0.7); font-size: 9px; font-family: 'DM Mono', monospace; padding: 2px 5px; border-radius: 4px; color: var(--text2); z-index: 2; }
 
   .card-menu-btn {
     background: var(--surface2);
@@ -295,7 +295,7 @@
   .file-row:hover .file-row-actions { opacity: 1; }
   .row-btn { background: none; border: 1px solid var(--border2); border-radius: 4px; color: var(--text2); font-size: 11px; padding: 2px 6px; cursor: pointer; }
 
-  /* VIDEO MODAL & PRO CONTROLS */
+  /* MODAL */
   .modal-overlay {
     position: fixed; inset: 0;
     background: rgba(0,0,0,0.92);
@@ -632,7 +632,9 @@ function getForwardSvg() {
 // ========== LOAD FILES ==========
 function loadFiles() {
   var area = document.getElementById('fileArea');
-  if (area) area.innerHTML = '<div class="empty-state">⏳ Loading files...</div>';
+  if (area && files.length === 0) {
+    area.innerHTML = '<div class="empty-state">⏳ Loading files...</div>';
+  }
 
   fetch(BACKEND_URL + '/files')
     .then(function(res) {
@@ -661,7 +663,9 @@ function loadFiles() {
     })
     .catch(function(e) {
       console.error(e);
-      if (area) area.innerHTML = '<div class="empty-state">⚠️ Server waking up... <br><button class="btn btn-primary" onclick="loadFiles()" style="margin-top:10px;">Retry</button></div>';
+      if (area && files.length === 0) {
+        area.innerHTML = '<div class="empty-state">⚠️ Server waking up... <br><button class="btn btn-primary" onclick="loadFiles()" style="margin-top:10px;">Retry</button></div>';
+      }
     });
 }
 
@@ -722,6 +726,8 @@ function handleFiles(fileList) {
     if (bar) bar.style.width = '0%';
     if (pct) pct.textContent = '0%';
 
+    var tempLocalUrl = URL.createObjectURL(f);
+
     var formData = new FormData();
     formData.append('file', f);
 
@@ -747,17 +753,20 @@ function handleFiles(fileList) {
             type: data.file.type,
             ext: data.file.name.split('.').pop() || '',
             category: data.file.category,
-            url: data.file.public_url,
+            url: tempLocalUrl,
             date: new Date(data.file.created_at),
             views: 0,
             shared: false,
             share_code: data.file.share_code
           });
-          showToast('Uploaded: ' + data.file.name);
           renderFiles();
           updateStats();
+          showToast('Uploaded: ' + data.file.name);
+          setTimeout(function() { loadFiles(); }, 1200);
         }
-      } catch(e) {}
+      } catch(e) {
+        loadFiles();
+      }
     };
     xhr.onerror = function() { showToast('Upload network error'); };
     xhr.send(formData);
@@ -798,10 +807,27 @@ function renderFiles() {
   document.querySelectorAll('#fileArea .card-dropdown').forEach(function(m) { document.body.appendChild(m); });
 }
 
+function handleImgError(img) {
+  img.onerror = null;
+  img.style.display = 'none';
+  var parent = img.parentElement;
+  if (parent) {
+    var span = document.createElement('span');
+    span.style.fontSize = '28px';
+    span.textContent = '🖼';
+    parent.appendChild(span);
+  }
+}
+
 function renderCard(f, i) {
-  var thumb = '<span style="font-size:28px">' + getFileEmoji(f.category) + '</span>';
-  if (f.category === 'video') thumb = '<video src="' + f.url + '" muted preload="metadata" onloadedmetadata="this.currentTime=1"></video>';
-  if (f.category === 'image') thumb = '<img src="' + f.url + '" alt="' + f.name + '" loading="lazy">';
+  var emoji = getFileEmoji(f.category);
+  var thumb = '<span style="font-size:28px">' + emoji + '</span>';
+  
+  if (f.category === 'video') {
+    thumb = '<video src="' + f.url + '" muted preload="metadata" onloadedmetadata="this.currentTime=1"></video>';
+  } else if (f.category === 'image') {
+    thumb = '<img src="' + f.url + '" alt="' + f.name + '" loading="lazy" onerror="handleImgError(this)">';
+  }
 
   return '<div class="file-card" onclick="openFile(\'' + f.id + '\')">' +
     '<div class="file-thumb">' +
