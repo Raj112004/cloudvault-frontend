@@ -384,7 +384,7 @@
 
   .view-toggle button.active { background: var(--surface2); color: var(--text); }
 
-  /* FIXED RESPONSIVE FILE GRID */
+  /* RESPONSIVE FILE GRID */
 
   .file-grid {
 
@@ -548,11 +548,7 @@
 
   .row-btn { background: none; border: 1px solid var(--border2); border-radius: 4px; color: var(--text2); font-size: 11px; padding: 2px 6px; cursor: pointer; }
 
-  /* ==========================================================================
-
-     CLEAN VIDEO MODAL & PRO PLAYER
-
-     ========================================================================== */
+  /* MODAL & VIDEO PLAYER */
 
   .modal-overlay {
 
@@ -686,8 +682,6 @@
 
   }
 
-  /* Timeline */
-
   .cv-prog-wrap { position: relative; height: 14px; display: flex; align-items: center; cursor: pointer; }
 
   .cv-prog-track { position: absolute; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.25); border-radius: 2px; }
@@ -736,8 +730,6 @@
 
   .cv-time { font-size: 11px; color: #ccc; font-family: 'Roboto', sans-serif; white-space: nowrap; padding-left: 2px; }
 
-  /* FIXED ZERO-OVERLAP 10S SKIP SVGS */
-
   .cv-skip-btn {
 
     background: none; border: none; color: #e0e0e8; cursor: pointer;
@@ -753,8 +745,6 @@
   .cv-cc-badge { font-size: 10px; font-weight: 700; border: 1.5px solid currentColor; padding: 0 3px; border-radius: 3px; line-height: 1.1; }
 
   .cv-cc-badge.active { background: #fff; color: #000; }
-
-  /* Settings Modal */
 
   .cv-pro-settings-modal {
 
@@ -802,8 +792,6 @@
 
   .cv-pane-item.selected::before { content: '•'; margin-right: 6px; font-size: 14px; }
 
-  /* Action Area Under Modal */
-
   .modal-action-bar {
 
     padding: 12px 14px;
@@ -838,15 +826,7 @@
 
   }
 
-  .modal-action-btns {
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 8px;
-
-  }
+  .modal-action-btns { display: flex; align-items: center; gap: 8px; }
 
   .toast {
 
@@ -1196,6 +1176,8 @@ async function loadFiles() {
 
   } catch(e) {
 
+    console.error(e);
+
     if (area) area.innerHTML = '<div class="empty-state">⚠️ Server waking up... <br><button class="btn btn-primary" onclick="loadFiles()" style="margin-top:10px;">Retry</button></div>';
 
   }
@@ -1504,7 +1486,7 @@ function renderRow(f, i) {
 
       '<button class="row-btn" onclick="event.stopPropagation();downloadFile(\'' + f.id + '\')">↓</button>' +
 
-      '<button class="row-btn" onclick="event.stopPropagation();deleteFile(\'' + f.id + '\')">✕</button>' +
+      '<button class="row-btn danger" onclick="event.stopPropagation();deleteFile(\'' + f.id + '\')">✕</button>' +
 
     '</div>' +
 
@@ -1551,6 +1533,10 @@ function fmtTime(s) {
 }
 
 function buildPlayer(f) {
+
+  const rewindSvg = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 3a9 9 0 1 0 8.7 6.7.75.75 0 0 0-1.46-.35A7.5 7.5 0 1 1 12.5 4.5H9.6l1.7-1.7a.75.75 0 0 0-1.06-1.06L6.97 4.97a.75.75 0 0 0 0 1.06l3.27 3.27a.75.75 0 0 0 1.06-1.06L9.6 6.5h2.9A9 9 0 0 0 12.5 3zm-2.8 8.2v5.6h1.2v-4.5l-.9.4-.3-.8 1.1-.7h.9zm3.8 0c-1 0-1.6.7-1.6 2v1.6c0 1.3.6 2 1.6 2s1.6-.7 1.6-2v-1.6c0-1.3-.6-2-1.6-2zm.4 3.7c0 .7-.2 1-.4 1s-.4-.3-.4-1v-1.8c0-.7.2-1 .4-1s.4.3.4 1v1.8z"/></svg>';
+
+  const forwardSvg = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.5 3a9 9 0 1 1-8.7 6.7.75.75 0 0 1 1.46-.35A7.5 7.5 0 1 0 11.5 4.5h2.9l-1.7-1.7a.75.75 0 0 1 1.06-1.06l3.27 3.27a.75.75 0 0 1 0 1.06l-3.27 3.27a.75.75 0 0 1-1.06-1.06l1.7-1.7h-2.9A9 9 0 0 1 11.5 3zm-2.8 8.2v5.6h1.2v-4.5l-.9.4-.3-.8 1.1-.7h.9zm3.8 0c-1 0-1.6.7-1.6 2v1.6c0 1.3.6 2 1.6 2s1.6-.7 1.6-2v-1.6c0-1.3-.6-2-1.6-2zm.4 3.7c0 .7-.2 1-.4 1s-.4-.3-.4-1v-1.8c0-.7.2-1 .4-1s.4.3.4 1v1.8z"/></svg>';
 
   return `
 
@@ -1676,27 +1662,19 @@ function buildPlayer(f) {
 
             <div class="cv-btn-group">
 
-              <!-- Rewind 10s Single-Path SVG (Zero Overlap) -->
+              <!-- Rewind 10s -->
 
               <button class="cv-skip-btn" onclick="cvSkip(-10)" title="Rewind 10s">
 
-                <svg viewBox="0 0 24 24" fill="currentColor">
-
-                  <path d="M12.5 3a9 9 0 1 0 8.7 6.7.75.75 0 0 0-1.46-.35A7.5 7.5 0 1 1 12.5 4.5H9.6l1.7-1.7a.75.75 0 0 0-1.06-1.06L6.97 4.97a.75.75 0 0 0 0 1.06l3.27 3.27a.75.75 0 0 0 1.06-1.06L9.6 6.5h2.9A9 9 0 0 0 12.5 3zm-2.8 8.2v5.6h1.2v-4.5l-.9.4-.3-.8 1.1-.7h.9zm3.8 0c-1 0-1.6.7-1.6 2v1.6c0 1.3.6 2 1.6 2s1.6-.7 1.6-2v-1.6c0-1.3-.6-2-1.6-2zm.4 3.7c0 .7-.2 1-.4 1s-.4-.3-.4-1v-1.8c0-.7.2-1 .4-1s.4.3.4 1v1.8z"/>
-
-                </svg>
+                ${rewindSvg}
 
               </button>
 
-              <!-- Forward 10s Single-Path SVG (Zero Overlap) -->
+              <!-- Forward 10s -->
 
               <button class="cv-skip-btn" onclick="cvSkip(10)" title="Forward 10s">
 
-                <svg viewBox="0 0 24 24" fill="currentColor">
-
-                  <path d="M11.5 3a9 9 0 1 1-8.7 6.7.75.75 0 0 1 1.46-.35A7.5 7.5 0 1 0 11.5 4.5h2.9l-1.7-1.7a.75.75 0 0 1 1.06-1.06l3.27 3.27a.75.75 0 0 1 0 1.06l-3.27 3.27a.75.75 0 0 1-1.06-1.06l1.7-1.7h-2.9A9 9 0 0 1 11.5 3zm-2.8 8.2v5.6h1.2v-4.5l-.9.4-.3-.8 1.1-.7h.9zm3.8 0c-1 0-1.6.7-1.6 2v1.6c0 1.3.6 2 1.6 2s1.6-.7 1.6-2v-1.6c0-1.3-.6-2-1.6-2zm.4 3.7c0 .7-.2 1-.4 1s-.4-.3-.4-1v-1.8c0-.7.2-1 .4-1s.4.3.4 1v1.8z"/>
-
-                </svg>
+                ${forwardSvg}
 
               </button>
 
