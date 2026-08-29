@@ -478,30 +478,6 @@
     .modal-action-bar { flex-direction: column; align-items: stretch; gap: 10px; }
     .modal-action-btns { display: grid; grid-template-columns: 1fr 1fr; }
   }
-
-  /* Modals */
-  .settings-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.8);
-    backdrop-filter: blur(6px); z-index: 400; display: none;
-    align-items: center; justify-content: center; padding: 16px;
-  }
-  .settings-overlay.open { display: flex; }
-  .settings-modal {
-    background: var(--surface); border: 1px solid var(--border2);
-    border-radius: 12px; width: 100%; max-width: 440px; max-height: 85vh; overflow-y: auto;
-  }
-  .settings-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); }
-  .settings-section { padding: 14px 16px; border-bottom: 1px solid var(--border); }
-  .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
-  .toggle { position: relative; width: 38px; height: 22px; }
-  .toggle input { opacity: 0; width: 0; height: 0; }
-  .toggle-track { position: absolute; inset: 0; background: var(--border2); border-radius: 99px; cursor: pointer; }
-  .toggle input:checked ~ .toggle-track { background: var(--accent); }
-  .toggle-thumb { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: transform 0.2s; }
-  .toggle input:checked ~ .toggle-track .toggle-thumb { transform: translateX(16px); }
-
-  #imgZoomControls { display: flex; }
-  .zoomable-img { max-width: 100%; max-height: 70vh; object-fit: contain; cursor: zoom-in; display: block; margin: 0 auto; }
 </style>
 </head>
 <body>
@@ -521,9 +497,6 @@
 
   <div style="display:flex;align-items:center;gap:8px;">
     <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">↑ Upload</button>
-    <button class="hamburger" style="display:flex;" onclick="openSettings()" title="Settings">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    </button>
   </div>
 </header>
 
@@ -537,8 +510,7 @@
     <div class="sidebar-item" onclick="filterFiles('document',this)"><span class="icon">📄</span> Documents <span class="sidebar-count" id="cnt-document">0</span></div>
     <div class="sidebar-item" onclick="filterFiles('audio',this)"><span class="icon">🎵</span> Audio <span class="sidebar-count" id="cnt-audio">0</span></div>
     <div class="sidebar-item" onclick="filterFiles('shared',this)" id="sidebarShared"><span class="icon">🔗</span> Shared <span class="sidebar-count" id="cnt-shared">0</span></div>
-    <div class="sidebar-label">Analytics</div>
-    <div class="sidebar-item" onclick="openAnalytics()"><span class="icon">📊</span> File Analytics</div>
+    
     <div class="storage-widget">
       <div class="storage-label"><span>Storage</span><span id="storePct" style="color:var(--accent)">0%</span></div>
       <div class="storage-bar"><div class="storage-fill" id="storeFill"></div></div>
@@ -591,7 +563,6 @@
     <div class="modal-action-bar">
       <div class="modal-file-details">
         <span id="modalInfo">—</span>
-        <span id="modalDim" style="color:var(--text3)"></span>
       </div>
       <div class="modal-action-btns">
         <div id="imgZoomControls" style="display:none;gap:4px;align-items:center;margin-right:4px;">
@@ -620,36 +591,12 @@ var currentView = 'grid';
 var currentFileIndex = null;
 var searchQuery = '';
 
-// In-memory cache for reliable blob URLs
-var blobCache = {};
-
 function getRewindSvg() {
   return '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 3a9 9 0 1 0 8.7 6.7.75.75 0 0 0-1.46-.35A7.5 7.5 0 1 1 12.5 4.5H9.6l1.7-1.7a.75.75 0 0 0-1.06-1.06L6.97 4.97a.75.75 0 0 0 0 1.06l3.27 3.27a.75.75 0 0 0 1.06-1.06L9.6 6.5h2.9A9 9 0 0 0 12.5 3zm-2.8 8.2v5.6h1.2v-4.5l-.9.4-.3-.8 1.1-.7h.9zm3.8 0c-1 0-1.6.7-1.6 2v1.6c0 1.3.6 2 1.6 2s1.6-.7 1.6-2v-1.6c0-1.3-.6-2-1.6-2zm.4 3.7c0 .7-.2 1-.4 1s-.4-.3-.4-1v-1.8c0-.7.2-1 .4-1s.4.3.4 1v1.8z"/></svg>';
 }
 
 function getForwardSvg() {
   return '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.5 3a9 9 0 1 1-8.7 6.7.75.75 0 0 1 1.46-.35A7.5 7.5 0 1 0 11.5 4.5h2.9l-1.7-1.7a.75.75 0 0 1 1.06-1.06l3.27 3.27a.75.75 0 0 1 0 1.06l-3.27 3.27a.75.75 0 0 1-1.06-1.06l1.7-1.7h-2.9A9 9 0 0 1 11.5 3zm-2.8 8.2v5.6h1.2v-4.5l-.9.4-.3-.8 1.1-.7h.9zm3.8 0c-1 0-1.6.7-1.6 2v1.6c0 1.3.6 2 1.6 2s1.6-.7 1.6-2v-1.6c0-1.3-.6-2-1.6-2zm.4 3.7c0 .7-.2 1-.4 1s-.4-.3-.4-1v-1.8c0-.7.2-1 .4-1s.4.3.4 1v1.8z"/></svg>';
-}
-
-// Pre-fetch raw images as blobs to prevent expired 401/403 authorization blocks
-function fetchBlobUrl(url, id, callback) {
-  if (blobCache[id]) {
-    callback(blobCache[id]);
-    return;
-  }
-  fetch(url)
-    .then(function(res) {
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.blob();
-    })
-    .then(function(blob) {
-      var objUrl = URL.createObjectURL(blob);
-      blobCache[id] = objUrl;
-      callback(objUrl);
-    })
-    .catch(function() {
-      callback(url);
-    });
 }
 
 // ========== LOAD FILES ==========
@@ -673,7 +620,7 @@ function loadFiles() {
           type: f.type,
           ext: f.name.split('.').pop().toLowerCase() || '',
           category: f.category,
-          url: f.public_url,
+          url: f.public_url || (BACKEND_URL + '/files/' + f.id),
           date: new Date(f.created_at),
           views: f.views || 0,
           downloads: f.downloads || 0,
@@ -749,7 +696,6 @@ function handleFiles(fileList) {
     if (bar) bar.style.width = '0%';
     if (pct) pct.textContent = '0%';
 
-    var tempBlobUrl = URL.createObjectURL(f);
     var formData = new FormData();
     formData.append('file', f);
 
@@ -768,24 +714,8 @@ function handleFiles(fileList) {
       try {
         var data = JSON.parse(xhr.responseText);
         if (data.success) {
-          blobCache[data.file.id] = tempBlobUrl;
-          files.unshift({
-            id: data.file.id,
-            name: data.file.name,
-            size: data.file.size,
-            type: data.file.type,
-            ext: data.file.name.split('.').pop() || '',
-            category: data.file.category,
-            url: tempBlobUrl,
-            date: new Date(data.file.created_at),
-            views: 0,
-            shared: false,
-            share_code: data.file.share_code
-          });
-          renderFiles();
-          updateStats();
-          showToast('Uploaded: ' + data.file.name);
-          setTimeout(function() { loadFiles(); }, 1200);
+          showToast('Uploaded: ' + (data.file ? data.file.name : f.name));
+          loadFiles();
         }
       } catch(e) {
         loadFiles();
@@ -828,16 +758,6 @@ function renderFiles() {
     area.innerHTML = '<div class="file-list"><div class="list-header"><div></div><div>Name</div><div>Type</div><div>Size</div><div>Date</div><div></div></div>' + filtered.map(function(f,i) { return renderRow(f,i); }).join('') + '</div>';
   }
   document.querySelectorAll('#fileArea .card-dropdown').forEach(function(m) { document.body.appendChild(m); });
-
-  // Resolve image blobs asynchronously for grid cards
-  filtered.forEach(function(f) {
-    if (f.category === 'image') {
-      fetchBlobUrl(f.url, f.id, function(resolvedUrl) {
-        var el = document.getElementById('img-thumb-' + f.id);
-        if (el) el.src = resolvedUrl;
-      });
-    }
-  });
 }
 
 function handleImgError(img) {
@@ -857,9 +777,9 @@ function renderCard(f, i) {
   var thumb = '<span style="font-size:28px">' + emoji + '</span>';
   
   if (f.category === 'video') {
-    thumb = '<video src="' + (blobCache[f.id] || f.url) + '" muted preload="metadata" onloadedmetadata="this.currentTime=1"></video>';
+    thumb = '<video src="' + f.url + '" muted preload="metadata" onloadedmetadata="this.currentTime=1"></video>';
   } else if (f.category === 'image') {
-    thumb = '<img id="img-thumb-' + f.id + '" src="' + (blobCache[f.id] || f.url) + '" alt="' + f.name + '" loading="lazy" onerror="handleImgError(this)">';
+    thumb = '<img src="' + f.url + '" alt="' + f.name + '" loading="lazy" onerror="handleImgError(this)">';
   }
 
   return '<div class="file-card" onclick="openFile(\'' + f.id + '\')">' +
@@ -926,7 +846,7 @@ function buildPlayer(f) {
   var html = '';
   html += '<div class="cv-player" id="cvPlayer">';
   html += '<video id="cvVid" playsinline webkit-playsinline preload="auto">';
-  html += '<source src="' + (blobCache[f.id] || f.url) + '" type="' + (f.type || 'video/mp4') + '">';
+  html += '<source src="' + f.url + '" type="' + (f.type || 'video/mp4') + '">';
   html += '</video>';
   html += '<div class="cv-center-play-overlay"><div class="cv-center-play-btn"></div></div>';
   html += '<div class="cv-subtitles-box" id="cvSubtitles"></div>';
@@ -1210,12 +1130,9 @@ function openFile(id) {
     } else if (f.category === 'image') {
       if (imgZoom) imgZoom.style.display = 'flex';
       imgZoomReset();
-      container.innerHTML = '<div style="color:#777;font-size:12px;">Loading preview...</div>';
-      fetchBlobUrl(f.url, f.id, function(blobUrl) {
-        container.innerHTML = '<img class="zoomable-img" src="' + blobUrl + '" alt="' + f.name + '" onclick="imgZoom(0.2)">';
-      });
+      container.innerHTML = '<img class="zoomable-img" src="' + f.url + '" alt="' + f.name + '" onclick="imgZoom(0.2)">';
     } else if (f.category === 'audio') {
-      container.innerHTML = '<div class="video-placeholder" style="gap:12px"><span style="font-size:44px">🎵</span><p>' + f.name + '</p><audio src="' + (blobCache[f.id] || f.url) + '" controls style="width:280px;"></audio></div>';
+      container.innerHTML = '<div class="video-placeholder" style="gap:12px"><span style="font-size:44px">🎵</span><p>' + f.name + '</p><audio src="' + f.url + '" controls style="width:280px;"></audio></div>';
     } else {
       container.innerHTML = '<div class="video-placeholder"><span>' + getFileEmoji(f.category) + '</span><p>No preview available</p><a href="' + f.url + '" target="_blank" style="color:var(--accent);font-size:12px;margin-top:10px;padding:6px 14px;border:1px solid var(--accent);border-radius:6px;text-decoration:none;">↓ Download file</a></div>';
     }
@@ -1324,24 +1241,6 @@ function closeSidebar() {
   var overlay = document.getElementById('sidebarOverlay');
   if (aside) aside.classList.remove('mobile-open');
   if (overlay) overlay.classList.remove('open');
-}
-
-function openSettings() { 
-  var el = document.getElementById('settingsOverlay');
-  if (el) el.classList.add('open'); 
-}
-function closeSettings() { 
-  var el = document.getElementById('settingsOverlay');
-  if (el) el.classList.remove('open'); 
-}
-function openAnalytics() { 
-  var el = document.getElementById('analyticsOverlay');
-  if (el) el.classList.add('open'); 
-  if (window.innerWidth <= 768) closeSidebar(); 
-}
-function closeAnalytics() { 
-  var el = document.getElementById('analyticsOverlay');
-  if (el) el.classList.remove('open'); 
 }
 
 var _imgScale = 1;
