@@ -26,12 +26,12 @@
         <div>
           <div class="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-indigo-300">
             <span class="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_#22d3ee]"></span>
-            Multi-device Cloud Sync
+            Multi-Device Cloud Sync
           </div>
           <h1 class="text-[28px] font-semibold tracking-[-0.04em] text-white">
             CloudVault Storage <span class="text-xl">✦</span>
           </h1>
-          <p class="mt-1.5 text-[13px] text-slate-500">Live Backblaze B2 + Supabase Synchronized Vault.</p>
+          <p class="mt-1.5 text-[13px] text-slate-500">Connected to Backblaze B2 & Supabase Cloud Sync.</p>
         </div>
 
         <div class="flex gap-2">
@@ -91,23 +91,23 @@
           </div>
           <div class="mt-3 flex items-center gap-2 text-[11px] text-emerald-300">
             <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-            Global Supabase Cloud Sync
+            Supabase Cloud Database
           </div>
         </div>
 
         <div class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5">
           <div class="mb-5 flex items-center justify-between">
-            <span class="text-[11px] font-medium text-slate-500">Backend Status</span>
+            <span class="text-[11px] font-medium text-slate-500">Vault Bridge</span>
             <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-400/10 text-indigo-300">
               <i data-lucide="zap" class="w-3.5 h-3.5"></i>
             </div>
           </div>
           <div class="text-[25px] font-semibold tracking-[-0.04em] text-white">
-            Connected <span class="text-sm font-normal text-slate-500">Proxy Active</span>
+            Active <span class="text-sm font-normal text-slate-500">B2 Node</span>
           </div>
           <div class="mt-3 flex items-center gap-2 text-[11px] text-slate-500">
             <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-            B2 Direct Vault Active
+            Universal Sync Ready
           </div>
         </div>
       </div>
@@ -125,7 +125,7 @@
       <div id="file-container" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"></div>
     </div>
 
-    <!-- PREVIEW VIEW -->
+    <!-- PREVIEW / STREAMING VIEW -->
     <div id="player-view" class="hidden">
       <div class="mb-6 flex items-center justify-between">
         <div>
@@ -157,7 +157,7 @@
         </div>
         <div class="min-w-0 flex-1">
           <div id="upload-toast-name" class="truncate text-[12px] font-medium text-white">Uploading...</div>
-          <div class="text-[10px] text-slate-500">Syncing to CloudVault</div>
+          <div class="text-[10px] text-slate-500">Syncing to Backblaze Vault</div>
         </div>
         <span id="upload-toast-pct" class="text-[11px] text-cyan-300">0%</span>
       </div>
@@ -178,39 +178,40 @@
     let currentFilter = 'All types';
 
     async function loadFiles() {
-      if (supabaseClient) {
-        const { data, error } = await supabaseClient
-          .from('files')
-          .select('*')
-          .order('created_at', { ascending: false });
+      if (!supabaseClient) return;
 
-        if (!error && data) {
-          liveFiles = data;
-        } else if (error) {
-          console.error("Supabase load error:", error);
-        }
+      const { data, error } = await supabaseClient
+        .from('files')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        liveFiles = data;
+      } else if (error) {
+        console.error("Supabase load error:", error);
       }
+      
       updateStorageAnalytics(liveFiles);
       renderFiles();
     }
 
-    function parseBytesFromSize(file) {
-      if (file.bytes && Number(file.bytes) > 0) return Number(file.bytes);
+    function parseBytes(file) {
+      if (typeof file.bytes === 'number' && file.bytes > 0) return file.bytes;
       if (typeof file.size === 'number') return file.size;
       if (!file.size || typeof file.size !== 'string') return 0;
       
       const match = file.size.match(/([\d.]+)\s*(KB|MB|GB)/i);
       if (!match) return 0;
-      const num = parseFloat(match[1]);
+      const val = parseFloat(match[1]);
       const unit = match[2].toUpperCase();
-      if (unit === 'GB') return num * 1024 * 1024 * 1024;
-      if (unit === 'MB') return num * 1024 * 1024;
-      if (unit === 'KB') return num * 1024;
-      return num;
+      if (unit === 'GB') return val * 1024 * 1024 * 1024;
+      if (unit === 'MB') return val * 1024 * 1024;
+      if (unit === 'KB') return val * 1024;
+      return val;
     }
 
     function updateStorageAnalytics(files) {
-      const totalBytes = files.reduce((acc, f) => acc + parseBytesFromSize(f), 0);
+      const totalBytes = files.reduce((acc, f) => acc + parseBytes(f), 0);
       const quotaBytes = 10 * 1024 * 1024 * 1024;
       const usedPct = Math.min(100, ((totalBytes / quotaBytes) * 100)).toFixed(1);
       const usedGB = (totalBytes / (1024 * 1024 * 1024)).toFixed(2);
@@ -223,8 +224,8 @@
       document.getElementById('storage-bytes-count').innerText = `${usedMB} MB active`;
       document.getElementById('stat-total-files').innerHTML = `${files.length} <span class="text-sm font-normal text-slate-500">files indexed</span>`;
 
-      const mediaBytes = files.filter(f => ['video', 'audio', 'image'].includes(f.kind)).reduce((acc, f) => acc + parseBytesFromSize(f), 0);
-      const docBytes = files.filter(f => f.kind === 'document').reduce((acc, f) => acc + parseBytesFromSize(f), 0);
+      const mediaBytes = files.filter(f => ['video', 'audio', 'image'].includes(f.kind)).reduce((acc, f) => acc + parseBytes(f), 0);
+      const docBytes = files.filter(f => f.kind === 'document').reduce((acc, f) => acc + parseBytes(f), 0);
 
       document.getElementById('stat-media-size').innerText = `${(mediaBytes / (1024 * 1024)).toFixed(1)} MB`;
       document.getElementById('stat-docs-size').innerText = `${(docBytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -280,25 +281,15 @@
           kind: kind,
           size: formattedSize,
           bytes: file.size,
-          key: uploadResult.fileKey
+          key: uploadResult.fileKey,
+          folder: 'Projects'
         };
 
         if (supabaseClient) {
-          let { error: insertError } = await supabaseClient.from('files').insert([newFileRecord]);
-          
+          const { error: insertError } = await supabaseClient.from('files').insert([newFileRecord]);
           if (insertError) {
-            // Strip optional fields dynamically if schema cache doesn't have them
-            const cleanRecord = {
-              name: newFileRecord.name,
-              kind: newFileRecord.kind,
-              size: newFileRecord.size,
-              key: newFileRecord.key
-            };
-            const retryRes = await supabaseClient.from('files').insert([cleanRecord]);
-            if (retryRes.error) {
-              console.error("Supabase insert error:", retryRes.error);
-              alert("Database notice: " + retryRes.error.message);
-            }
+            console.error("Supabase insert error:", insertError);
+            alert("Database notice: " + insertError.message);
           }
         }
 
