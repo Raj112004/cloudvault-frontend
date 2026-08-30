@@ -194,8 +194,21 @@
       renderFiles();
     }
 
+    function parseBytesFromSize(file) {
+      if (file.bytes && Number(file.bytes) > 0) return Number(file.bytes);
+      if (!file.size) return 0;
+      const match = file.size.match(/([\d.]+)\s*(KB|MB|GB)/i);
+      if (!match) return 0;
+      const num = parseFloat(match[1]);
+      const unit = match[2].toUpperCase();
+      if (unit === 'GB') return num * 1024 * 1024 * 1024;
+      if (unit === 'MB') return num * 1024 * 1024;
+      if (unit === 'KB') return num * 1024;
+      return num;
+    }
+
     function updateStorageAnalytics(files) {
-      const totalBytes = files.reduce((acc, f) => acc + (f.bytes || 0), 0);
+      const totalBytes = files.reduce((acc, f) => acc + parseBytesFromSize(f), 0);
       const quotaBytes = 10 * 1024 * 1024 * 1024;
       const usedPct = Math.min(100, ((totalBytes / quotaBytes) * 100)).toFixed(1);
       const usedGB = (totalBytes / (1024 * 1024 * 1024)).toFixed(2);
@@ -208,8 +221,8 @@
       document.getElementById('storage-bytes-count').innerText = `${usedMB} MB active`;
       document.getElementById('stat-total-files').innerHTML = `${files.length} <span class="text-sm font-normal text-slate-500">files indexed</span>`;
 
-      const mediaBytes = files.filter(f => ['video', 'audio', 'image'].includes(f.kind)).reduce((acc, f) => acc + (f.bytes || 0), 0);
-      const docBytes = files.filter(f => f.kind === 'document').reduce((acc, f) => acc + (f.bytes || 0), 0);
+      const mediaBytes = files.filter(f => ['video', 'audio', 'image'].includes(f.kind)).reduce((acc, f) => acc + parseBytesFromSize(f), 0);
+      const docBytes = files.filter(f => f.kind === 'document').reduce((acc, f) => acc + parseBytesFromSize(f), 0);
 
       document.getElementById('stat-media-size').innerText = `${(mediaBytes / (1024 * 1024)).toFixed(1)} MB`;
       document.getElementById('stat-docs-size').innerText = `${(docBytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -270,8 +283,19 @@
         };
 
         if (supabaseClient) {
-          const { error: insertError } = await supabaseClient.from('files').insert([newFileRecord]);
-          if (insertError) console.error("Supabase insert error:", insertError);
+          let { error: insertError } = await supabaseClient.from('files').insert([newFileRecord]);
+          
+          if (insertError && insertError.message && insertError.message.includes('bytes')) {
+            const fallbackRecord = { ...newFileRecord };
+            delete fallbackRecord.bytes;
+            const res = await supabaseClient.from('files').insert([fallbackRecord]);
+            insertError = res.error;
+          }
+
+          if (insertError) {
+            console.error("Supabase insert error:", insertError);
+            alert("Database sync note: " + insertError.message);
+          }
         }
 
         await loadFiles();
@@ -308,7 +332,7 @@
           <div class="truncate text-[12px] font-medium text-slate-200 group-hover:text-white">${file.name}</div>
           <div class="mt-1.5 flex items-center justify-between text-[10px] text-slate-600">
             <span>${file.size}</span>
-            <span>${new Date(file.created_at).toLocaleDateString()}</span>
+            <span>${new Date(file.created_at || Date.now()).toLocaleDateString()}</span>
           </div>
         `;
 
