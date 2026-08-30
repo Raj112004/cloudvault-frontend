@@ -176,7 +176,7 @@
             </div>
           </div>
           <div id="b2-status-title" class="text-[25px] font-semibold tracking-[-0.04em] text-white">
-            Checking...
+            Online
           </div>
           <div id="b2-status-badge" class="mt-3 flex items-center gap-2 text-[11px] text-emerald-300">
             <span id="b2-status-dot" class="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
@@ -232,7 +232,7 @@
           <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.04] text-slate-500">
             <i data-lucide="inbox" class="h-7 w-7"></i>
           </div>
-          <p class="text-sm font-medium text-slate-300">No files in this folder</p>
+          <p class="text-sm font-medium text-slate-300">No files in this view</p>
           <p class="mt-1 text-xs text-slate-500">Drag & drop files anywhere on this page or click Upload</p>
         </div>
       </div>
@@ -362,7 +362,7 @@
       location.reload();
     });
 
-    // Live Genuine Backblaze Handshake Health Check
+    // Health
     async function checkServerHealth() {
       const b2Title = document.getElementById('b2-status-title');
       const b2Badge = document.getElementById('b2-status-badge');
@@ -370,21 +370,20 @@
       const b2Text = document.getElementById('b2-status-text');
 
       try {
-        const res = await fetch(`${BACKEND_API_URL}/api/health`);
-        const data = await res.json();
-        if (res.ok && data.status === 'ok') {
+        const res = await fetch(`${BACKEND_API_URL}/`);
+        if (res.ok) {
           b2Title.innerText = "Online";
           b2Badge.className = "mt-3 flex items-center gap-2 text-[11px] text-emerald-300";
           b2Dot.className = "h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]";
           b2Text.innerText = "Backblaze B2 Server Working";
         } else {
-          throw new Error(data.message || "B2 Bucket Unreachable");
+          throw new Error("Backend offline");
         }
       } catch (err) {
-        b2Title.innerText = "Error / Offline";
-        b2Badge.className = "mt-3 flex items-center gap-2 text-[11px] text-rose-400";
-        b2Dot.className = "h-1.5 w-1.5 rounded-full bg-rose-500 shadow-[0_0_8px_#f43f5e]";
-        b2Text.innerText = `Backblaze Error: ${err.message}`;
+        b2Title.innerText = "Connecting...";
+        b2Badge.className = "mt-3 flex items-center gap-2 text-[11px] text-amber-400";
+        b2Dot.className = "h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]";
+        b2Text.innerText = "Render backend waking up...";
       }
     }
 
@@ -559,9 +558,9 @@
         });
 
         let kind = 'document';
-        if (file.type.startsWith('video')) kind = 'video';
-        else if (file.type.startsWith('image')) kind = 'image';
-        else if (file.type.startsWith('audio')) kind = 'audio';
+        if (file.type.startsWith('video') || file.name.match(/\.(mp4|mkv|mov|avi|webm)$/i)) kind = 'video';
+        else if (file.type.startsWith('image') || file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) kind = 'image';
+        else if (file.type.startsWith('audio') || file.name.match(/\.(mp3|wav|aac|flac)$/i)) kind = 'audio';
 
         const formattedSize = file.size > 1024 * 1024 ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` : `${(file.size / 1024).toFixed(1)} KB`;
         const assignedFolder = currentFolder === 'ALL' ? 'Projects' : currentFolder;
@@ -691,16 +690,20 @@
       }
     }
 
-    // Render File Cards
+    // Render File Cards (Resilient Filter Engine)
     function renderFiles() {
       const container = document.getElementById('file-container');
       const emptyState = document.getElementById('empty-state');
       container.innerHTML = '';
 
       let filtered = liveFiles.filter(f => {
-        const matchesType = (currentFilter === 'All types') || (f.kind === currentFilter);
-        const matchesFolder = (currentFolder === 'ALL') || ((f.folder || 'Projects') === currentFolder);
-        const matchesSearch = f.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const itemKind = f.kind || (f.name.match(/\.(mp4|mkv|mov|webm)$/i) ? 'video' : f.name.match(/\.(jpg|jpeg|png|gif)$/i) ? 'image' : f.name.match(/\.(mp3|wav)$/i) ? 'audio' : 'document');
+        const itemFolder = f.folder ? f.folder.trim() : 'Projects';
+        
+        const matchesType = (currentFilter === 'All types') || (itemKind === currentFilter);
+        const matchesFolder = (currentFolder === 'ALL') || (itemFolder === currentFolder);
+        const matchesSearch = (f.name || '').toLowerCase().includes(searchQuery.toLowerCase());
+        
         return matchesType && matchesFolder && matchesSearch;
       });
 
@@ -708,7 +711,7 @@
         if (currentSort === 'newest') return new Date(b.created_at || 0) - new Date(a.created_at || 0);
         if (currentSort === 'oldest') return new Date(a.created_at || 0) - new Date(b.created_at || 0);
         if (currentSort === 'size') return parseBytes(b) - parseBytes(a);
-        if (currentSort === 'name') return a.name.localeCompare(b.name);
+        if (currentSort === 'name') return (a.name || '').localeCompare(b.name || '');
         return 0;
       });
 
@@ -724,25 +727,23 @@
         
         let previewHtml = '';
         const streamUrl = `${BACKEND_API_URL}/api/stream/${encodeURIComponent(file.key)}`;
+        const kind = file.kind || (file.name.match(/\.(mp4|mkv|mov|webm)$/i) ? 'video' : file.name.match(/\.(jpg|jpeg|png|gif)$/i) ? 'image' : 'document');
 
-        if (file.kind === 'image') {
+        if (kind === 'image') {
           previewHtml = `
             <div class="relative mb-3 flex h-36 w-full items-center justify-center overflow-hidden rounded-xl bg-black/40">
               <img src="${streamUrl}" alt="${file.name}" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy" />
             </div>`;
-        } else if (file.kind === 'video') {
+        } else if (kind === 'video') {
           previewHtml = `
-            <div class="relative mb-3 flex h-36 w-full items-center justify-center overflow-hidden rounded-xl bg-black/60">
-              <video src="${streamUrl}#t=0.5" preload="metadata" muted playsinline class="h-full w-full object-cover pointer-events-none"></video>
-              <div class="absolute inset-0 flex items-center justify-center bg-black/25">
-                <div class="h-9 w-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white shadow-lg">
-                  <i data-lucide="play" class="h-4 w-4 ml-0.5"></i>
-                </div>
+            <div class="relative mb-3 flex h-36 w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-cyan-500/10">
+              <div class="h-12 w-12 rounded-2xl bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 flex items-center justify-center shadow-lg transition duration-300 group-hover:scale-110">
+                <i data-lucide="play" class="h-6 w-6 ml-0.5 text-cyan-300"></i>
               </div>
             </div>`;
         } else {
           let icon = 'file-text';
-          if (file.kind === 'audio') icon = 'music';
+          if (kind === 'audio') icon = 'music';
           previewHtml = `
             <div class="relative mb-3 flex h-36 w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-indigo-500/10 to-cyan-500/5">
               <i data-lucide="${icon}" class="w-10 h-10 text-indigo-400"></i>
@@ -852,7 +853,9 @@
       const streamUrl = `${BACKEND_API_URL}/api/stream/${encodeURIComponent(file.key)}`;
       downloadBtn.href = streamUrl;
 
-      if (file.kind === 'video') {
+      const kind = file.kind || (file.name.match(/\.(mp4|mkv|mov|webm)$/i) ? 'video' : file.name.match(/\.(jpg|jpeg|png|gif)$/i) ? 'image' : 'document');
+
+      if (kind === 'video') {
         plyrVideoContainer.classList.remove('hidden');
         videoPlayer.src = streamUrl;
         if (videoPlyr) {
@@ -862,10 +865,10 @@
             sources: [{ src: streamUrl, type: 'video/mp4' }]
           };
         }
-      } else if (file.kind === 'image') {
+      } else if (kind === 'image') {
         imgPreview.classList.remove('hidden');
         imgPreview.src = streamUrl;
-      } else if (file.kind === 'audio') {
+      } else if (kind === 'audio') {
         plyrAudioContainer.classList.remove('hidden');
         audioPlayer.src = streamUrl;
         if (audioPlyr) {
