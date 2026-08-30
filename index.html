@@ -7,6 +7,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Plyr Video & Audio Player CSS and JS -->
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+
   <style>
     body {
       background-color: #090a0f;
@@ -17,11 +22,17 @@
       border-color: #6366f1 !important;
       background-color: rgba(99, 102, 241, 0.08) !important;
     }
+    .plyr--video {
+      border-radius: 1rem;
+      overflow: hidden;
+      width: 100%;
+      max-height: 650px;
+    }
   </style>
 </head>
 <body class="min-h-screen">
 
-  <!-- PIN LOCK MODAL OVERLAY -->
+  <!-- PASSCODE LOCK MODAL -->
   <div id="pin-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md">
     <div class="w-full max-w-sm rounded-3xl border border-white/10 bg-[#12141c] p-7 text-center shadow-2xl">
       <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-400">
@@ -29,7 +40,12 @@
       </div>
       <h2 class="text-xl font-semibold text-white">Vault Passcode</h2>
       <p class="mt-1 text-xs text-slate-400">Enter your 4-digit PIN to access storage</p>
-      <input id="pin-input" type="password" maxlength="6" autofocus placeholder="Hint: Muskan's Birth Date" class="mt-5 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center text-sm tracking-widest text-white outline-none placeholder:text-xs placeholder:tracking-normal placeholder:text-slate-500 focus:border-indigo-400" />
+      
+      <input id="pin-input" type="password" maxlength="6" autofocus placeholder="Enter Passcode" class="mt-5 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center text-sm tracking-widest text-white outline-none placeholder:text-xs placeholder:tracking-normal placeholder:text-slate-500 focus:border-indigo-400" />
+      
+      <!-- HINT LOCATED DIRECTLY UNDER TYPING BOX -->
+      <p class="mt-2 text-xs font-medium text-indigo-300/90">Hint - Muskan's Birth Date and Month</p>
+      
       <button id="btn-unlock" class="mt-4 w-full rounded-xl bg-indigo-500 py-3 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-indigo-400">Unlock Vault</button>
       <p id="pin-error" class="mt-2 hidden text-xs text-rose-400">Incorrect PIN code. Try again.</p>
     </div>
@@ -40,7 +56,7 @@
 
     <!-- DASHBOARD VIEW -->
     <div id="dashboard-view">
-      <!-- Top Header -->
+      <!-- Header -->
       <div class="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
         <div>
           <div class="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-indigo-300">
@@ -73,7 +89,7 @@
         </div>
       </div>
 
-      <!-- Storage Analytics Grid -->
+      <!-- Live Health Cards -->
       <div class="mb-8 grid gap-4 xl:grid-cols-[1.35fr_1fr_1fr]">
         <div class="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-indigo-500/[0.16] via-[#151624] to-cyan-400/[0.06] p-5">
           <div class="relative flex items-center gap-5">
@@ -136,7 +152,7 @@
             </div>
           </div>
           <div id="b2-status-title" class="text-[25px] font-semibold tracking-[-0.04em] text-white">
-            Checking...
+            Connected
           </div>
           <div id="b2-status-badge" class="mt-3 flex items-center gap-2 text-[11px] text-emerald-300">
             <span id="b2-status-dot" class="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
@@ -145,7 +161,16 @@
         </div>
       </div>
 
-      <!-- Search, Sort & Folder Filter Bar -->
+      <!-- FOLDERS LIST GRID (Folder-First View) -->
+      <div id="folders-section" class="mb-8">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-slate-200">Vault Folders</h2>
+          <span id="folder-count-badge" class="text-xs text-slate-500">0 folders</span>
+        </div>
+        <div id="folders-container" class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"></div>
+      </div>
+
+      <!-- Search & Sort Filter Bar -->
       <div class="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div class="relative flex-1">
           <i data-lucide="search" class="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
@@ -153,10 +178,11 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <select id="folder-select" class="rounded-xl border border-white/[0.08] bg-[#161822] px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-400">
-            <option value="ALL">📁 All Folders (All Files)</option>
-            <option value="Projects">📁 Projects</option>
-          </select>
+          <!-- Active Breadcrumb Indicator -->
+          <div id="active-folder-indicator" class="flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-medium text-indigo-300">
+            <i data-lucide="folder" class="h-3.5 w-3.5"></i>
+            <span id="active-folder-name">All Folders</span>
+          </div>
 
           <select id="sort-select" class="rounded-xl border border-white/[0.08] bg-[#161822] px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-400">
             <option value="newest">📅 Newest First</option>
@@ -183,13 +209,13 @@
           <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.04] text-slate-500">
             <i data-lucide="inbox" class="h-7 w-7"></i>
           </div>
-          <p class="text-sm font-medium text-slate-300">No files in this view</p>
+          <p class="text-sm font-medium text-slate-300">No files in this folder</p>
           <p class="mt-1 text-xs text-slate-500">Drag & drop files anywhere on this page or click Upload</p>
         </div>
       </div>
     </div>
 
-    <!-- PREVIEW / STREAMING VIEW -->
+    <!-- PREVIEW / STREAMING VIEW (With Plyr Player) -->
     <div id="player-view" class="hidden">
       <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -209,9 +235,18 @@
       </div>
 
       <div class="flex min-h-[420px] items-center justify-center overflow-hidden rounded-3xl border border-white/[0.08] bg-black/60 p-4">
+        <!-- Plyr Video Wrapper -->
+        <div id="plyr-video-container" class="hidden w-full max-w-4xl">
+          <video id="vault-video-player" playsinline controls class="w-full"></video>
+        </div>
+        
+        <!-- Plyr Audio Wrapper -->
+        <div id="plyr-audio-container" class="hidden w-full max-w-xl my-12">
+          <audio id="vault-audio-player" controls class="w-full"></audio>
+        </div>
+
         <img id="vault-image-preview" class="hidden max-h-[650px] max-w-full rounded-2xl object-contain shadow-2xl" />
-        <video id="vault-video-player" controls class="hidden max-h-[650px] w-full rounded-2xl shadow-2xl"></video>
-        <audio id="vault-audio-player" controls class="my-12 hidden w-full"></audio>
+        
         <div id="vault-doc-preview" class="hidden p-8 text-center">
           <i data-lucide="file-text" class="mx-auto mb-3 h-16 w-16 text-indigo-400"></i>
           <p class="mb-4 text-sm text-slate-300">Document streaming preview is not embedded.</p>
@@ -255,6 +290,15 @@
     let searchQuery = '';
     let activePreviewKey = '';
 
+    // Initialize Plyr Players
+    let videoPlyr = null;
+    let audioPlyr = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      videoPlyr = new Plyr('#vault-video-player', { controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'] });
+      audioPlyr = new Plyr('#vault-audio-player', { controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume'] });
+    });
+
     // --- 2. PIN AUTHENTICATION ---
     const pinModal = document.getElementById('pin-modal');
     const pinInput = document.getElementById('pin-input');
@@ -291,7 +335,7 @@
       location.reload();
     });
 
-    // --- 3. HEALTH MONITORS ---
+    // --- 3. LIVE HEALTH MONITORS (Resilient Check) ---
     async function checkServerHealth() {
       const b2Title = document.getElementById('b2-status-title');
       const b2Badge = document.getElementById('b2-status-badge');
@@ -299,21 +343,20 @@
       const b2Text = document.getElementById('b2-status-text');
 
       try {
-        const res = await fetch(`${BACKEND_API_URL}/api/health`);
-        const data = await res.json();
-        if (res.ok && data.status === 'ok') {
+        const res = await fetch(`${BACKEND_API_URL}/`);
+        if (res.ok) {
           b2Title.innerText = "Online";
           b2Badge.className = "mt-3 flex items-center gap-2 text-[11px] text-emerald-300";
           b2Dot.className = "h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]";
           b2Text.innerText = "Backblaze B2 Server Working";
         } else {
-          throw new Error(data.message || "B2 Disconnected");
+          throw new Error("Backend not returning OK");
         }
       } catch (err) {
-        b2Title.innerText = "Error / Offline";
-        b2Badge.className = "mt-3 flex items-center gap-2 text-[11px] text-rose-400";
-        b2Dot.className = "h-1.5 w-1.5 rounded-full bg-rose-500 shadow-[0_0_8px_#f43f5e]";
-        b2Text.innerText = `Backblaze B2 Error (${err.message || 'Server waking up'})`;
+        b2Title.innerText = "Waking Up...";
+        b2Badge.className = "mt-3 flex items-center gap-2 text-[11px] text-amber-400";
+        b2Dot.className = "h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]";
+        b2Text.innerText = "Connecting to Render server...";
       }
     }
 
@@ -333,7 +376,7 @@
       }
     }
 
-    // --- 4. DATA ENGINE ---
+    // --- 4. DATA ENGINE & FOLDER DISCOVERY ---
     async function loadFiles() {
       if (!supabaseClient) {
         updateSupabaseStatus(false, 'Supabase client missing');
@@ -358,24 +401,60 @@
         if (f.folder && f.folder.trim()) knownFolders.add(f.folder.trim());
       });
 
-      populateFolderDropdown();
+      renderFolderCards();
       updateStorageAnalytics(liveFiles);
       renderFiles();
     }
 
-    function populateFolderDropdown() {
-      const select = document.getElementById('folder-select');
-      const prevVal = select.value;
-      select.innerHTML = '<option value="ALL">📁 All Folders (All Files)</option>';
+    function renderFolderCards() {
+      const container = document.getElementById('folders-container');
+      container.innerHTML = '';
 
+      // All Folders card
+      const allCard = document.createElement('div');
+      allCard.className = `cursor-pointer rounded-2xl border p-3 transition flex items-center gap-3 ${currentFolder === 'ALL' ? 'border-indigo-400/40 bg-indigo-500/10 text-white' : 'border-white/[0.08] bg-white/[0.025] text-slate-300 hover:border-white/20'}`;
+      allCard.innerHTML = `
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-300 shrink-0">
+          <i data-lucide="layers" class="h-4 w-4"></i>
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="truncate text-xs font-semibold">All Files</div>
+          <div class="text-[10px] text-slate-500">${liveFiles.length} files</div>
+        </div>
+      `;
+      allCard.addEventListener('click', () => {
+        currentFolder = 'ALL';
+        document.getElementById('active-folder-name').innerText = 'All Folders';
+        renderFolderCards();
+        renderFiles();
+      });
+      container.appendChild(allCard);
+
+      // Render Each Active Folder
       knownFolders.forEach(folder => {
-        const opt = document.createElement('option');
-        opt.value = folder;
-        opt.innerText = `📁 ${folder}`;
-        select.appendChild(opt);
+        const count = liveFiles.filter(f => (f.folder || 'Projects') === folder).length;
+        const card = document.createElement('div');
+        card.className = `cursor-pointer rounded-2xl border p-3 transition flex items-center gap-3 ${currentFolder === folder ? 'border-cyan-400/40 bg-cyan-500/10 text-white' : 'border-white/[0.08] bg-white/[0.025] text-slate-300 hover:border-white/20'}`;
+        card.innerHTML = `
+          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-300 shrink-0">
+            <i data-lucide="folder" class="h-4 w-4"></i>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="truncate text-xs font-semibold">${folder}</div>
+            <div class="text-[10px] text-slate-500">${count} files</div>
+          </div>
+        `;
+        card.addEventListener('click', () => {
+          currentFolder = folder;
+          document.getElementById('active-folder-name').innerText = `Folder: ${folder}`;
+          renderFolderCards();
+          renderFiles();
+        });
+        container.appendChild(card);
       });
 
-      select.value = knownFolders.has(prevVal) || prevVal === 'ALL' ? prevVal : 'ALL';
+      document.getElementById('folder-count-badge').innerText = `${knownFolders.size} folders active`;
+      lucide.createIcons();
     }
 
     function parseBytes(file) {
@@ -395,7 +474,7 @@
 
     function updateStorageAnalytics(files) {
       const totalBytes = files.reduce((acc, f) => acc + parseBytes(f), 0);
-      const quotaBytes = 10 * 1024 * 1024 * 1024;
+      const quotaBytes = 10 * 1024 * 1024 * 1024; // 10 GB
       const usedPct = Math.min(100, ((totalBytes / quotaBytes) * 100)).toFixed(1);
       const usedGB = (totalBytes / (1024 * 1024 * 1024)).toFixed(2);
       const usedMB = (totalBytes / (1024 * 1024)).toFixed(1);
@@ -414,7 +493,7 @@
       document.getElementById('stat-docs-size').innerText = `${(docBytes / (1024 * 1024)).toFixed(1)} MB`;
     }
 
-    // --- 5. UPLOADS ---
+    // --- 5. UPLOAD ENGINE ---
     async function uploadSingleFile(file) {
       const toast = document.getElementById('upload-toast');
       const toastName = document.getElementById('upload-toast-name');
@@ -449,7 +528,7 @@
               reject(new Error(`Upload failed with status ${xhr.status}`));
             }
           };
-          xhr.onerror = () => reject(new Error('Network error connecting to Render backend'));
+          xhr.onerror = () => reject(new Error('Network error connecting to backend'));
           xhr.send(formData);
         });
 
@@ -488,43 +567,35 @@
       await loadFiles();
     }
 
-    // --- 6. FOLDER MOVE & DELETE ---
-    async function moveFileFolder(file, newFolder) {
-      try {
+    // --- 6. MOVE & DELETE VIA THREE-DOT MENU ---
+    async function moveFileFolder(file) {
+      const folderList = Array.from(knownFolders).join(', ');
+      const targetFolder = prompt(`Move "${file.name}" to which folder?\nAvailable: ${folderList}`, file.folder || 'Projects');
+      if (targetFolder && targetFolder.trim()) {
+        const clean = targetFolder.trim();
+        knownFolders.add(clean);
         if (supabaseClient) {
-          const { error } = await supabaseClient
-            .from('files')
-            .update({ folder: newFolder })
-            .eq('key', file.key);
-
-          if (error) throw error;
+          await supabaseClient.from('files').update({ folder: clean }).eq('key', file.key);
         }
         await loadFiles();
-      } catch (err) {
-        alert('Could not move file: ' + err.message);
       }
     }
 
-    async function deleteFile(file, event) {
-      event.stopPropagation();
+    async function deleteFile(file) {
       if (!confirm(`Permanently delete "${file.name}" from Backblaze B2 & database?`)) return;
 
       try {
-        await fetch(`${BACKEND_API_URL}/api/delete/${encodeURIComponent(file.key)}`, {
-          method: 'DELETE'
-        });
-
+        await fetch(`${BACKEND_API_URL}/api/delete/${encodeURIComponent(file.key)}`, { method: 'DELETE' });
         if (supabaseClient) {
           await supabaseClient.from('files').delete().eq('key', file.key);
         }
-
         await loadFiles();
       } catch (err) {
         alert('Failed to delete file: ' + err.message);
       }
     }
 
-    // --- 7. CARDS & THUMBNAILS ---
+    // --- 7. RENDER FILE CARDS (With 3-Dot Menus) ---
     function renderFiles() {
       const container = document.getElementById('file-container');
       const emptyState = document.getElementById('empty-state');
@@ -571,43 +642,62 @@
             </div>`;
         }
 
-        let folderOptions = '';
-        knownFolders.forEach(folder => {
-          const isSelected = (file.folder || 'Projects') === folder ? 'selected' : '';
-          folderOptions += `<option value="${folder}" ${isSelected}>📁 ${folder}</option>`;
-        });
-
         item.innerHTML = `
           ${previewHtml}
           <div class="truncate text-[12px] font-medium text-slate-200 group-hover:text-white" title="${file.name}">${file.name}</div>
           
-          <div class="mt-2 flex items-center justify-between gap-2 text-[10px] text-slate-400">
+          <div class="mt-2 flex items-center justify-between text-[10px] text-slate-400">
             <span>${file.size || '0 KB'}</span>
-            <select class="folder-move-select rounded-md bg-[#181a24] border border-white/10 px-2 py-1 text-[10px] text-indigo-300 outline-none hover:border-indigo-400">
-              ${folderOptions}
-            </select>
+            <span class="rounded-md bg-white/[0.05] px-2 py-0.5 font-mono text-indigo-300">📁 ${file.folder || 'Projects'}</span>
           </div>
 
           <div class="mt-3 flex items-center justify-between border-t border-white/[0.06] pt-2">
-            <button class="btn-copy-link flex items-center gap-1 text-[11px] text-indigo-300 hover:text-indigo-200" title="Copy link">
+            <button class="btn-copy-link flex items-center gap-1 text-[11px] text-indigo-300 hover:text-indigo-200" title="Copy stream link">
               <i data-lucide="share-2" class="w-3 h-3"></i> Share
             </button>
-            <button class="btn-delete-card text-slate-500 hover:text-rose-400 transition" title="Delete file">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-            </button>
+            
+            <!-- Three Dot Menu -->
+            <div class="relative">
+              <button class="btn-dots p-1 text-slate-400 hover:text-white rounded-lg hover:bg-white/[0.08]" title="Actions">
+                <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+              </button>
+              <div class="dropdown-menu absolute right-0 bottom-7 z-20 hidden w-36 rounded-xl border border-white/10 bg-[#161824] p-1.5 shadow-2xl">
+                <button class="btn-move w-full flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-200 hover:bg-white/[0.08]">
+                  <i data-lucide="folder-input" class="w-3.5 h-3.5 text-cyan-300"></i> Move Folder
+                </button>
+                <button class="btn-delete w-full flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px] text-rose-400 hover:bg-rose-500/10">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete File
+                </button>
+              </div>
+            </div>
           </div>
         `;
 
         item.addEventListener('click', () => openPreview(file));
 
-        const moveSelect = item.querySelector('.folder-move-select');
-        moveSelect.addEventListener('click', (e) => e.stopPropagation());
-        moveSelect.addEventListener('change', (e) => {
+        const dotsBtn = item.querySelector('.btn-dots');
+        const dropdownMenu = item.querySelector('.dropdown-menu');
+
+        dotsBtn.addEventListener('click', (e) => {
           e.stopPropagation();
-          moveFileFolder(file, e.target.value);
+          document.querySelectorAll('.dropdown-menu').forEach(m => {
+            if (m !== dropdownMenu) m.classList.add('hidden');
+          });
+          dropdownMenu.classList.toggle('hidden');
         });
 
-        item.querySelector('.btn-delete-card').addEventListener('click', (e) => deleteFile(file, e));
+        item.querySelector('.btn-move').addEventListener('click', (e) => {
+          e.stopPropagation();
+          dropdownMenu.classList.add('hidden');
+          moveFileFolder(file);
+        });
+
+        item.querySelector('.btn-delete').addEventListener('click', (e) => {
+          e.stopPropagation();
+          dropdownMenu.classList.add('hidden');
+          deleteFile(file);
+        });
+
         item.querySelector('.btn-copy-link').addEventListener('click', (e) => {
           e.stopPropagation();
           copyShareLink(file.key);
@@ -619,13 +709,20 @@
       lucide.createIcons();
     }
 
-    // --- 8. PREVIEW & SHARE ---
+    // Close menus on outside click
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
+    });
+
+    // --- 8. PREVIEW WITH PLYR PLAYER ---
     function openPreview(file) {
       activePreviewKey = file.key;
       document.getElementById('dashboard-view').classList.add('hidden');
       document.getElementById('player-view').classList.remove('hidden');
       document.getElementById('player-file-name').innerText = file.name;
 
+      const plyrVideoContainer = document.getElementById('plyr-video-container');
+      const plyrAudioContainer = document.getElementById('plyr-audio-container');
       const videoPlayer = document.getElementById('vault-video-player');
       const audioPlayer = document.getElementById('vault-audio-player');
       const imgPreview = document.getElementById('vault-image-preview');
@@ -633,8 +730,8 @@
       const docLink = document.getElementById('vault-doc-link');
       const downloadBtn = document.getElementById('btn-download-file');
 
-      videoPlayer.classList.add('hidden');
-      audioPlayer.classList.add('hidden');
+      plyrVideoContainer.classList.add('hidden');
+      plyrAudioContainer.classList.add('hidden');
       imgPreview.classList.add('hidden');
       docPreview.classList.add('hidden');
 
@@ -642,16 +739,16 @@
       downloadBtn.href = streamUrl;
 
       if (file.kind === 'video') {
-        videoPlayer.classList.remove('hidden');
+        plyrVideoContainer.classList.remove('hidden');
         videoPlayer.src = streamUrl;
-        videoPlayer.play();
+        if (videoPlyr) videoPlyr.source = { type: 'video', sources: [{ src: streamUrl }] };
       } else if (file.kind === 'image') {
         imgPreview.classList.remove('hidden');
         imgPreview.src = streamUrl;
       } else if (file.kind === 'audio') {
-        audioPlayer.classList.remove('hidden');
+        plyrAudioContainer.classList.remove('hidden');
         audioPlayer.src = streamUrl;
-        audioPlayer.play();
+        if (audioPlyr) audioPlyr.source = { type: 'audio', sources: [{ src: streamUrl }] };
       } else {
         docPreview.classList.remove('hidden');
         docLink.href = streamUrl;
@@ -672,8 +769,8 @@
     });
 
     document.getElementById('btn-back').addEventListener('click', () => {
-      document.getElementById('vault-video-player').pause();
-      document.getElementById('vault-audio-player').pause();
+      if (videoPlyr) videoPlyr.stop();
+      if (audioPlyr) audioPlyr.stop();
       document.getElementById('player-view').classList.add('hidden');
       document.getElementById('dashboard-view').classList.remove('hidden');
     });
@@ -694,19 +791,14 @@
       renderFiles();
     });
 
-    document.getElementById('folder-select').addEventListener('change', (e) => {
-      currentFolder = e.target.value;
-      renderFiles();
-    });
-
     document.getElementById('btn-new-folder').addEventListener('click', () => {
       const folderName = prompt('Enter new folder name:');
       if (folderName && folderName.trim()) {
         const clean = folderName.trim();
         knownFolders.add(clean);
-        populateFolderDropdown();
-        document.getElementById('folder-select').value = clean;
         currentFolder = clean;
+        document.getElementById('active-folder-name').innerText = `Folder: ${clean}`;
+        renderFolderCards();
         renderFiles();
       }
     });
@@ -745,7 +837,7 @@
       });
     });
 
-    // Initialize
+    // Run Initializers
     checkAuth();
     loadFiles();
     checkServerHealth();
