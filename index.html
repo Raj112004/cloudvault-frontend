@@ -80,7 +80,6 @@
 
     <!-- DASHBOARD VIEW -->
     <div id="dashboard-view">
-      <!-- Header -->
       <div class="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
         <div>
           <div class="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-indigo-300">
@@ -113,7 +112,7 @@
         </div>
       </div>
 
-      <!-- Storage Analytics Grid -->
+      <!-- Analytics Grid -->
       <div class="mb-8 grid gap-4 xl:grid-cols-[1.35fr_1fr_1fr]">
         <div class="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-indigo-500/[0.16] via-[#151624] to-cyan-400/[0.06] p-5">
           <div class="relative flex items-center gap-5">
@@ -370,20 +369,21 @@
       const b2Text = document.getElementById('b2-status-text');
 
       try {
-        const res = await fetch(`${BACKEND_API_URL}/`);
-        if (res.ok) {
+        const res = await fetch(`${BACKEND_API_URL}/api/health`);
+        const data = await res.json();
+        if (res.ok && data.status === 'ok') {
           b2Title.innerText = "Online";
           b2Badge.className = "mt-3 flex items-center gap-2 text-[11px] text-emerald-300";
           b2Dot.className = "h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]";
           b2Text.innerText = "Backblaze B2 Server Working";
         } else {
-          throw new Error("Backend offline");
+          throw new Error(data.message || "B2 Bucket Unreachable");
         }
       } catch (err) {
-        b2Title.innerText = "Connecting...";
-        b2Badge.className = "mt-3 flex items-center gap-2 text-[11px] text-amber-400";
-        b2Dot.className = "h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]";
-        b2Text.innerText = "Render backend waking up...";
+        b2Title.innerText = "Error / Offline";
+        b2Badge.className = "mt-3 flex items-center gap-2 text-[11px] text-rose-400";
+        b2Dot.className = "h-1.5 w-1.5 rounded-full bg-rose-500 shadow-[0_0_8px_#f43f5e]";
+        b2Text.innerText = `Backblaze Error: ${err.message}`;
       }
     }
 
@@ -680,7 +680,7 @@
       if (!confirm(`Permanently delete "${file.name}" from Backblaze B2 & database?`)) return;
 
       try {
-        await fetch(`${BACKEND_API_URL}/api/delete/${encodeURIComponent(file.key)}`, { method: 'DELETE' });
+        await fetch(`${BACKEND_API_URL}/api/delete?key=${encodeURIComponent(file.key)}`, { method: 'DELETE' });
         if (supabaseClient) {
           await supabaseClient.from('files').delete().eq('key', file.key);
         }
@@ -690,7 +690,7 @@
       }
     }
 
-    // Render File Cards (Resilient Filter Engine)
+    // Render File Cards
     function renderFiles() {
       const container = document.getElementById('file-container');
       const emptyState = document.getElementById('empty-state');
@@ -725,10 +725,11 @@
         const item = document.createElement('div');
         item.className = 'group relative text-left rounded-2xl border border-white/[0.08] bg-white/[0.025] p-3.5 hover:border-indigo-400/30 hover:bg-white/[0.045] transition-all cursor-pointer';
         
-        let previewHtml = '';
-        const streamUrl = `${BACKEND_API_URL}/api/stream/${encodeURIComponent(file.key)}`;
+        // Use Query-Parameter Stream URLs
+        const streamUrl = `${BACKEND_API_URL}/api/stream?key=${encodeURIComponent(file.key)}`;
         const kind = file.kind || (file.name.match(/\.(mp4|mkv|mov|webm)$/i) ? 'video' : file.name.match(/\.(jpg|jpeg|png|gif)$/i) ? 'image' : 'document');
 
+        let previewHtml = '';
         if (kind === 'image') {
           previewHtml = `
             <div class="relative mb-3 flex h-36 w-full items-center justify-center overflow-hidden rounded-xl bg-black/40">
@@ -850,7 +851,7 @@
       imgPreview.classList.add('hidden');
       docPreview.classList.add('hidden');
 
-      const streamUrl = `${BACKEND_API_URL}/api/stream/${encodeURIComponent(file.key)}`;
+      const streamUrl = `${BACKEND_API_URL}/api/stream?key=${encodeURIComponent(file.key)}`;
       downloadBtn.href = streamUrl;
 
       const kind = file.kind || (file.name.match(/\.(mp4|mkv|mov|webm)$/i) ? 'video' : file.name.match(/\.(jpg|jpeg|png|gif)$/i) ? 'image' : 'document');
@@ -885,7 +886,7 @@
     }
 
     function copyShareLink(key) {
-      const shareUrl = `${BACKEND_API_URL}/api/stream/${encodeURIComponent(key)}`;
+      const shareUrl = `${BACKEND_API_URL}/api/stream?key=${encodeURIComponent(key)}`;
       navigator.clipboard.writeText(shareUrl).then(() => {
         alert('✅ Direct share link copied to clipboard!');
       }).catch(() => {
