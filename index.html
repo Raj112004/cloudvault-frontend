@@ -176,7 +176,7 @@
             </div>
           </div>
           <div id="b2-status-title" class="text-[25px] font-semibold tracking-[-0.04em] text-white">
-            Connected
+            Checking...
           </div>
           <div id="b2-status-badge" class="mt-3 flex items-center gap-2 text-[11px] text-emerald-300">
             <span id="b2-status-dot" class="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
@@ -362,7 +362,7 @@
       location.reload();
     });
 
-    // Health
+    // Live Genuine Backblaze Handshake Health Check
     async function checkServerHealth() {
       const b2Title = document.getElementById('b2-status-title');
       const b2Badge = document.getElementById('b2-status-badge');
@@ -370,20 +370,21 @@
       const b2Text = document.getElementById('b2-status-text');
 
       try {
-        const res = await fetch(`${BACKEND_API_URL}/`);
-        if (res.ok) {
+        const res = await fetch(`${BACKEND_API_URL}/api/health`);
+        const data = await res.json();
+        if (res.ok && data.status === 'ok') {
           b2Title.innerText = "Online";
           b2Badge.className = "mt-3 flex items-center gap-2 text-[11px] text-emerald-300";
           b2Dot.className = "h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]";
           b2Text.innerText = "Backblaze B2 Server Working";
         } else {
-          throw new Error("Backend offline");
+          throw new Error(data.message || "B2 Bucket Unreachable");
         }
       } catch (err) {
-        b2Title.innerText = "Connecting...";
-        b2Badge.className = "mt-3 flex items-center gap-2 text-[11px] text-amber-400";
-        b2Dot.className = "h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]";
-        b2Text.innerText = "Render backend waking up...";
+        b2Title.innerText = "Error / Offline";
+        b2Badge.className = "mt-3 flex items-center gap-2 text-[11px] text-rose-400";
+        b2Dot.className = "h-1.5 w-1.5 rounded-full bg-rose-500 shadow-[0_0_8px_#f43f5e]";
+        b2Text.innerText = `Backblaze Error: ${err.message}`;
       }
     }
 
