@@ -23,7 +23,7 @@
       background-color: rgba(99, 102, 241, 0.08) !important;
     }
     .plyr--video {
-      border-radius: 1rem;
+      border-radius: 1.25rem;
       overflow: hidden;
       width: 100%;
       max-height: 650px;
@@ -43,11 +43,36 @@
       
       <input id="pin-input" type="password" maxlength="6" autofocus placeholder="Enter Passcode" class="mt-5 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center text-sm tracking-widest text-white outline-none placeholder:text-xs placeholder:tracking-normal placeholder:text-slate-500 focus:border-indigo-400" />
       
-      <!-- HINT LOCATED DIRECTLY UNDER TYPING BOX -->
       <p class="mt-2 text-xs font-medium text-indigo-300/90">Hint - Muskan's Birth Date and Month</p>
       
       <button id="btn-unlock" class="mt-4 w-full rounded-xl bg-indigo-500 py-3 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-indigo-400">Unlock Vault</button>
       <p id="pin-error" class="mt-2 hidden text-xs text-rose-400">Incorrect PIN code. Try again.</p>
+    </div>
+  </div>
+
+  <!-- MOVE FILE MODAL DIALOG -->
+  <div id="move-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="w-full max-w-md rounded-3xl border border-white/10 bg-[#141622] p-6 shadow-2xl">
+      <div class="mb-4 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-semibold text-white">Move File</h3>
+          <p id="move-modal-filename" class="truncate text-xs text-slate-400 max-w-[280px]">Select destination folder</p>
+        </div>
+        <button id="btn-close-move-modal" class="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white">
+          <i data-lucide="x" class="h-4 w-4"></i>
+        </button>
+      </div>
+
+      <div class="mb-4 text-[11px] uppercase tracking-wider text-slate-500">Available Destination Folders</div>
+      
+      <div id="move-folder-list" class="max-h-56 space-y-2 overflow-y-auto pr-1"></div>
+
+      <div class="mt-4 border-t border-white/[0.08] pt-3 flex justify-between items-center">
+        <button id="btn-modal-create-folder" class="flex items-center gap-1.5 text-xs text-indigo-300 hover:text-indigo-200">
+          <i data-lucide="folder-plus" class="h-3.5 w-3.5"></i> + New Folder
+        </button>
+        <button id="btn-cancel-move" class="rounded-xl bg-white/[0.06] px-4 py-2 text-xs text-slate-300 hover:bg-white/[0.12]">Cancel</button>
+      </div>
     </div>
   </div>
 
@@ -178,7 +203,6 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <!-- Active Breadcrumb Indicator -->
           <div id="active-folder-indicator" class="flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-medium text-indigo-300">
             <i data-lucide="folder" class="h-3.5 w-3.5"></i>
             <span id="active-folder-name">All Folders</span>
@@ -215,7 +239,7 @@
       </div>
     </div>
 
-    <!-- PREVIEW / STREAMING VIEW (With Plyr Player) -->
+    <!-- PREVIEW / STREAMING VIEW (Plyr Player with Multitrack & Captions) -->
     <div id="player-view" class="hidden">
       <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -235,12 +259,10 @@
       </div>
 
       <div class="flex min-h-[420px] items-center justify-center overflow-hidden rounded-3xl border border-white/[0.08] bg-black/60 p-4">
-        <!-- Plyr Video Wrapper -->
         <div id="plyr-video-container" class="hidden w-full max-w-4xl">
-          <video id="vault-video-player" playsinline controls class="w-full"></video>
+          <video id="vault-video-player" playsinline crossorigin controls class="w-full"></video>
         </div>
         
-        <!-- Plyr Audio Wrapper -->
         <div id="plyr-audio-container" class="hidden w-full max-w-xl my-12">
           <audio id="vault-audio-player" controls class="w-full"></audio>
         </div>
@@ -289,14 +311,25 @@
     let currentSort = 'newest';
     let searchQuery = '';
     let activePreviewKey = '';
+    let fileToMove = null;
 
-    // Initialize Plyr Players
+    // Initialize Plyr Player with full multi-audio & subtitles controls
     let videoPlyr = null;
     let audioPlyr = null;
 
     document.addEventListener('DOMContentLoaded', () => {
-      videoPlyr = new Plyr('#vault-video-player', { controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'] });
-      audioPlyr = new Plyr('#vault-audio-player', { controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume'] });
+      videoPlyr = new Plyr('#vault-video-player', {
+        controls: [
+          'play-large', 'play', 'progress', 'current-time', 'mute', 
+          'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'
+        ],
+        settings: ['captions', 'quality', 'speed', 'loop']
+      });
+      
+      audioPlyr = new Plyr('#vault-audio-player', {
+        controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings'],
+        settings: ['speed', 'loop']
+      });
     });
 
     // --- 2. PIN AUTHENTICATION ---
@@ -335,7 +368,7 @@
       location.reload();
     });
 
-    // --- 3. LIVE HEALTH MONITORS (Resilient Check) ---
+    // --- 3. LIVE HEALTH MONITORS ---
     async function checkServerHealth() {
       const b2Title = document.getElementById('b2-status-title');
       const b2Badge = document.getElementById('b2-status-badge');
@@ -350,13 +383,13 @@
           b2Dot.className = "h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]";
           b2Text.innerText = "Backblaze B2 Server Working";
         } else {
-          throw new Error("Backend not returning OK");
+          throw new Error("Backend offline");
         }
       } catch (err) {
-        b2Title.innerText = "Waking Up...";
+        b2Title.innerText = "Connecting...";
         b2Badge.className = "mt-3 flex items-center gap-2 text-[11px] text-amber-400";
         b2Dot.className = "h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]";
-        b2Text.innerText = "Connecting to Render server...";
+        b2Text.innerText = "Render backend waking up...";
       }
     }
 
@@ -410,7 +443,6 @@
       const container = document.getElementById('folders-container');
       container.innerHTML = '';
 
-      // All Folders card
       const allCard = document.createElement('div');
       allCard.className = `cursor-pointer rounded-2xl border p-3 transition flex items-center gap-3 ${currentFolder === 'ALL' ? 'border-indigo-400/40 bg-indigo-500/10 text-white' : 'border-white/[0.08] bg-white/[0.025] text-slate-300 hover:border-white/20'}`;
       allCard.innerHTML = `
@@ -430,7 +462,6 @@
       });
       container.appendChild(allCard);
 
-      // Render Each Active Folder
       knownFolders.forEach(folder => {
         const count = liveFiles.filter(f => (f.folder || 'Projects') === folder).length;
         const card = document.createElement('div');
@@ -567,19 +598,68 @@
       await loadFiles();
     }
 
-    // --- 6. MOVE & DELETE VIA THREE-DOT MENU ---
-    async function moveFileFolder(file) {
-      const folderList = Array.from(knownFolders).join(', ');
-      const targetFolder = prompt(`Move "${file.name}" to which folder?\nAvailable: ${folderList}`, file.folder || 'Projects');
-      if (targetFolder && targetFolder.trim()) {
-        const clean = targetFolder.trim();
-        knownFolders.add(clean);
+    // --- 6. OS-STYLE MOVE FILE MODAL WINDOW ---
+    function openMoveModal(file) {
+      fileToMove = file;
+      document.getElementById('move-modal-filename').innerText = `Moving: ${file.name}`;
+      const list = document.getElementById('move-folder-list');
+      list.innerHTML = '';
+
+      knownFolders.forEach(folder => {
+        const item = document.createElement('div');
+        const isCurrent = (file.folder || 'Projects') === folder;
+        item.className = `flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition ${isCurrent ? 'border-indigo-400/40 bg-indigo-500/10' : 'border-white/[0.08] bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]'}`;
+        item.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-400/10 text-cyan-300">
+              <i data-lucide="folder" class="h-4 w-4"></i>
+            </div>
+            <span class="text-xs font-medium text-white">${folder}</span>
+          </div>
+          ${isCurrent ? '<span class="text-[10px] text-indigo-300 font-mono">Current</span>' : '<span class="text-[10px] text-slate-500">Move here →</span>'}
+        `;
+        
+        item.addEventListener('click', () => executeMove(folder));
+        list.appendChild(item);
+      });
+
+      document.getElementById('move-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    async function executeMove(targetFolder) {
+      if (!fileToMove) return;
+      try {
         if (supabaseClient) {
-          await supabaseClient.from('files').update({ folder: clean }).eq('key', file.key);
+          await supabaseClient
+            .from('files')
+            .update({ folder: targetFolder })
+            .eq('key', fileToMove.key);
         }
+        document.getElementById('move-modal').classList.add('hidden');
+        fileToMove = null;
         await loadFiles();
+      } catch (err) {
+        alert('Could not move file: ' + err.message);
       }
     }
+
+    document.getElementById('btn-close-move-modal').addEventListener('click', () => {
+      document.getElementById('move-modal').classList.add('hidden');
+    });
+
+    document.getElementById('btn-cancel-move').addEventListener('click', () => {
+      document.getElementById('move-modal').classList.add('hidden');
+    });
+
+    document.getElementById('btn-modal-create-folder').addEventListener('click', () => {
+      const name = prompt('Enter new folder name:');
+      if (name && name.trim()) {
+        const clean = name.trim();
+        knownFolders.add(clean);
+        executeMove(clean);
+      }
+    });
 
     async function deleteFile(file) {
       if (!confirm(`Permanently delete "${file.name}" from Backblaze B2 & database?`)) return;
@@ -595,7 +675,7 @@
       }
     }
 
-    // --- 7. RENDER FILE CARDS (With 3-Dot Menus) ---
+    // --- 7. RENDER CARDS (With Video Previews & 3-Dot Menus) ---
     function renderFiles() {
       const container = document.getElementById('file-container');
       const emptyState = document.getElementById('empty-state');
@@ -627,14 +707,26 @@
         item.className = 'group relative text-left rounded-2xl border border-white/[0.08] bg-white/[0.025] p-3.5 hover:border-indigo-400/30 hover:bg-white/[0.045] transition-all cursor-pointer';
         
         let previewHtml = '';
+        const streamUrl = `${BACKEND_API_URL}/api/stream/${encodeURIComponent(file.key)}`;
+
         if (file.kind === 'image') {
           previewHtml = `
             <div class="relative mb-3 flex h-36 w-full items-center justify-center overflow-hidden rounded-xl bg-black/40">
-              <img src="${BACKEND_API_URL}/api/stream/${encodeURIComponent(file.key)}" alt="${file.name}" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy" />
+              <img src="${streamUrl}" alt="${file.name}" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy" />
+            </div>`;
+        } else if (file.kind === 'video') {
+          // Video Auto-Thumbnail Frame
+          previewHtml = `
+            <div class="relative mb-3 flex h-36 w-full items-center justify-center overflow-hidden rounded-xl bg-black/60">
+              <video src="${streamUrl}#t=0.5" preload="metadata" muted playsinline class="h-full w-full object-cover pointer-events-none"></video>
+              <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
+                <div class="h-9 w-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white">
+                  <i data-lucide="play" class="h-4 w-4 ml-0.5"></i>
+                </div>
+              </div>
             </div>`;
         } else {
           let icon = 'file-text';
-          if (file.kind === 'video') icon = 'video';
           if (file.kind === 'audio') icon = 'music';
           previewHtml = `
             <div class="relative mb-3 flex h-36 w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-indigo-500/10 to-cyan-500/5">
@@ -652,7 +744,7 @@
           </div>
 
           <div class="mt-3 flex items-center justify-between border-t border-white/[0.06] pt-2">
-            <button class="btn-copy-link flex items-center gap-1 text-[11px] text-indigo-300 hover:text-indigo-200" title="Copy stream link">
+            <button class="btn-copy-link flex items-center gap-1 text-[11px] text-indigo-300 hover:text-indigo-200" title="Copy link">
               <i data-lucide="share-2" class="w-3 h-3"></i> Share
             </button>
             
@@ -663,7 +755,7 @@
               </button>
               <div class="dropdown-menu absolute right-0 bottom-7 z-20 hidden w-36 rounded-xl border border-white/10 bg-[#161824] p-1.5 shadow-2xl">
                 <button class="btn-move w-full flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-200 hover:bg-white/[0.08]">
-                  <i data-lucide="folder-input" class="w-3.5 h-3.5 text-cyan-300"></i> Move Folder
+                  <i data-lucide="folder-input" class="w-3.5 h-3.5 text-cyan-300"></i> Move File
                 </button>
                 <button class="btn-delete w-full flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px] text-rose-400 hover:bg-rose-500/10">
                   <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete File
@@ -689,7 +781,7 @@
         item.querySelector('.btn-move').addEventListener('click', (e) => {
           e.stopPropagation();
           dropdownMenu.classList.add('hidden');
-          moveFileFolder(file);
+          openMoveModal(file);
         });
 
         item.querySelector('.btn-delete').addEventListener('click', (e) => {
@@ -709,7 +801,6 @@
       lucide.createIcons();
     }
 
-    // Close menus on outside click
     document.addEventListener('click', () => {
       document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
     });
@@ -741,14 +832,26 @@
       if (file.kind === 'video') {
         plyrVideoContainer.classList.remove('hidden');
         videoPlayer.src = streamUrl;
-        if (videoPlyr) videoPlyr.source = { type: 'video', sources: [{ src: streamUrl }] };
+        if (videoPlyr) {
+          videoPlyr.source = {
+            type: 'video',
+            title: file.name,
+            sources: [{ src: streamUrl, type: 'video/mp4' }]
+          };
+        }
       } else if (file.kind === 'image') {
         imgPreview.classList.remove('hidden');
         imgPreview.src = streamUrl;
       } else if (file.kind === 'audio') {
         plyrAudioContainer.classList.remove('hidden');
         audioPlayer.src = streamUrl;
-        if (audioPlyr) audioPlyr.source = { type: 'audio', sources: [{ src: streamUrl }] };
+        if (audioPlyr) {
+          audioPlyr.source = {
+            type: 'audio',
+            title: file.name,
+            sources: [{ src: streamUrl }]
+          };
+        }
       } else {
         docPreview.classList.remove('hidden');
         docLink.href = streamUrl;
