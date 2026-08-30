@@ -8,7 +8,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
-  <!-- Plyr Player -->
+  <!-- Plyr Video Player -->
   <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
   <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
 
@@ -185,7 +185,7 @@
         </div>
       </div>
 
-      <!-- FOLDERS LIST GRID -->
+      <!-- Folders Grid -->
       <div id="folders-section" class="mb-8">
         <div class="mb-3 flex items-center justify-between">
           <h2 class="text-sm font-semibold text-slate-200">Vault Folders</h2>
@@ -194,7 +194,7 @@
         <div id="folders-container" class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"></div>
       </div>
 
-      <!-- Search & Sort Filter Bar -->
+      <!-- Search & Sort Bar -->
       <div class="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div class="relative flex-1">
           <i data-lucide="search" class="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
@@ -216,7 +216,7 @@
         </div>
       </div>
 
-      <!-- Type Filter Tabs -->
+      <!-- Filter Tabs -->
       <div class="mb-6 flex gap-2 overflow-x-auto pb-1" id="filter-container">
         <button class="filter-tab whitespace-nowrap rounded-full border px-3.5 py-1.5 text-[11px] border-indigo-400/30 bg-indigo-400/10 text-indigo-200" data-filter="All types">All types</button>
         <button class="filter-tab whitespace-nowrap rounded-full border border-white/[0.07] px-3.5 py-1.5 text-[11px] text-slate-400 hover:border-white/[0.14] hover:text-slate-200" data-filter="image">Images</button>
@@ -225,7 +225,7 @@
         <button class="filter-tab whitespace-nowrap rounded-full border border-white/[0.07] px-3.5 py-1.5 text-[11px] text-slate-400 hover:border-white/[0.14] hover:text-slate-200" data-filter="document">Documents</button>
       </div>
 
-      <!-- Live File Grid -->
+      <!-- File Grid -->
       <div id="dropzone" class="min-h-[320px] rounded-3xl border-2 border-dashed border-white/[0.08] p-4 transition-all">
         <div id="file-container" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
         <div id="empty-state" class="hidden flex flex-col items-center justify-center py-20 text-center">
@@ -276,7 +276,7 @@
       </div>
     </div>
 
-    <!-- Upload Progress Toast -->
+    <!-- Upload Toast -->
     <div id="upload-toast" class="fixed bottom-5 right-5 z-50 hidden w-80 rounded-2xl border border-white/[0.1] bg-[#161822] p-4 shadow-2xl">
       <div class="flex items-center gap-3">
         <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-300">
@@ -284,7 +284,7 @@
         </div>
         <div class="min-w-0 flex-1">
           <div id="upload-toast-name" class="truncate text-[12px] font-medium text-white">Uploading...</div>
-          <div class="text-[10px] text-slate-400">Streaming to Backblaze Vault</div>
+          <div class="text-[10px] text-slate-400">Syncing to Backblaze Vault</div>
         </div>
         <span id="upload-toast-pct" class="text-[11px] text-cyan-300">0%</span>
       </div>
@@ -326,7 +326,7 @@
       });
     });
 
-    // Authentication
+    // Auth
     const pinModal = document.getElementById('pin-modal');
     const pinInput = document.getElementById('pin-input');
     const pinError = document.getElementById('pin-error');
@@ -362,7 +362,7 @@
       location.reload();
     });
 
-    // Health monitors
+    // Health
     async function checkServerHealth() {
       const b2Title = document.getElementById('b2-status-title');
       const b2Badge = document.getElementById('b2-status-badge');
@@ -403,7 +403,7 @@
       }
     }
 
-    // Data Load
+    // Load Data
     async function loadFiles() {
       if (!supabaseClient) {
         updateSupabaseStatus(false, 'Supabase client missing');
@@ -518,7 +518,7 @@
       document.getElementById('stat-docs-size').innerText = `${(docBytes / (1024 * 1024)).toFixed(1)} MB`;
     }
 
-    // Direct Stream Upload (Browser to Backend to B2 Pipe)
+    // Direct Upload Handler
     async function uploadSingleFile(file) {
       const toast = document.getElementById('upload-toast');
       const toastName = document.getElementById('upload-toast-name');
@@ -531,11 +531,12 @@
       progressFill.style.width = '0%';
 
       try {
+        const formData = new FormData();
+        formData.append('file', file);
+
         const uploadResult = await new Promise((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhr.open('POST', `${BACKEND_API_URL}/api/upload`, true);
-          xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-          xhr.setRequestHeader('X-Filename', encodeURIComponent(file.name));
 
           xhr.upload.onprogress = (e) => {
             if (e.lengthComputable) {
@@ -553,7 +554,7 @@
             }
           };
           xhr.onerror = () => reject(new Error('Network error connecting to backend'));
-          xhr.send(file);
+          xhr.send(formData);
         });
 
         let kind = 'document';
@@ -591,7 +592,7 @@
       await loadFiles();
     }
 
-    // Rename File
+    // Rename
     async function renameFile(file) {
       const newName = prompt(`Enter new name for "${file.name}":`, file.name);
       if (newName && newName.trim() && newName.trim() !== file.name) {
@@ -611,7 +612,7 @@
       }
     }
 
-    // Move modal
+    // Move
     function openMoveModal(file) {
       fileToMove = file;
       document.getElementById('move-modal-filename').innerText = `Moving: ${file.name}`;
@@ -674,6 +675,7 @@
       }
     });
 
+    // Delete
     async function deleteFile(file) {
       if (!confirm(`Permanently delete "${file.name}" from Backblaze B2 & database?`)) return;
 
@@ -688,7 +690,7 @@
       }
     }
 
-    // Render Cards
+    // Render File Cards
     function renderFiles() {
       const container = document.getElementById('file-container');
       const emptyState = document.getElementById('empty-state');
@@ -728,7 +730,6 @@
               <img src="${streamUrl}" alt="${file.name}" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy" />
             </div>`;
         } else if (file.kind === 'video') {
-          // Embedded Video Poster Frame
           previewHtml = `
             <div class="relative mb-3 flex h-36 w-full items-center justify-center overflow-hidden rounded-xl bg-black/60">
               <video src="${streamUrl}#t=0.5" preload="metadata" muted playsinline class="h-full w-full object-cover pointer-events-none"></video>
@@ -899,7 +900,7 @@
       document.getElementById('dashboard-view').classList.remove('hidden');
     });
 
-    // Event Listeners
+    // Listeners
     document.getElementById('btn-upload').addEventListener('click', () => document.getElementById('file-input').click());
     document.getElementById('file-input').addEventListener('change', (e) => {
       if (e.target.files.length) handleBatchUpload(e.target.files);
@@ -927,7 +928,7 @@
       }
     });
 
-    // Drag and Drop
+    // Drag and drop
     const dropzone = document.getElementById('dropzone');
     ['dragenter', 'dragover'].forEach(eventName => {
       window.addEventListener(eventName, (e) => {
@@ -961,7 +962,7 @@
       });
     });
 
-    // Init
+    // Start
     checkAuth();
     loadFiles();
     checkServerHealth();
