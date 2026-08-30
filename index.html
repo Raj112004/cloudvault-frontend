@@ -3,267 +3,479 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CloudVault — Personal Cloud Storage & Stream</title>
+  <title>CloudVault Workspace</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            obsidian: '#0a0b0e',
-            surface: '#111318',
-            glass: 'rgba(255, 255, 255, 0.03)',
-            'glass-border': 'rgba(255, 255, 255, 0.08)',
-          }
-        }
-      }
-    }
-  </script>
   <style>
     body {
       background-color: #0a0b0e;
       color: #e2e8f0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    }
-    .radial-bg {
-      background-image: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.06) 0, transparent 2px), radial-gradient(circle at 70% 60%, rgba(99,102,241,0.08) 0, transparent 1px);
-      background-size: 26px 26px, 18px 18px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     }
   </style>
 </head>
 <body class="min-h-screen">
 
-  <div class="mx-auto max-w-[1440px] px-5 pb-10 pt-8 lg:px-8">
-    
-    <!-- Top Header -->
-    <div class="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-      <div>
-        <div class="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-indigo-300">
-          <span class="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_#22d3ee]"></span>
-          Personal workspace
+  <div id="app" class="mx-auto max-w-[1440px] px-5 pb-10 pt-8 lg:px-8">
+    <input type="file" id="file-input" class="hidden" multiple />
+
+    <!-- DASHBOARD VIEW -->
+    <div id="dashboard-view">
+      <!-- Header -->
+      <div class="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+        <div>
+          <div class="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-indigo-300">
+            <span class="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_#22d3ee]"></span>
+            Personal workspace
+          </div>
+          <h1 class="text-[28px] font-semibold tracking-[-0.04em] text-white">
+            Good morning, Jordan <span class="text-xl">✦</span>
+          </h1>
+          <p class="mt-1.5 text-[13px] text-slate-500">
+            Your vault is calm and organized. Here's what's happening today.
+          </p>
         </div>
-        <h1 class="text-[28px] font-semibold tracking-[-0.04em] text-white">
-          CloudVault Workspace <span class="text-xl">✦</span>
-        </h1>
-        <p class="mt-1.5 text-[13px] text-slate-500">
-          Your secure vault is live. Upload, stream, and share your media seamlessly.
-        </p>
+
+        <div class="flex gap-2">
+          <button id="btn-share" class="flex items-center gap-2 rounded-lg border border-white/[0.09] bg-white/[0.035] px-3.5 py-2.5 text-[12px] font-medium text-slate-300 transition hover:bg-white/[0.08] hover:text-white">
+            <i data-lucide="share-2" class="w-4 h-4"></i>
+            Share
+          </button>
+          <button id="btn-upload" class="flex items-center gap-2 rounded-lg bg-indigo-500 px-3.5 py-2.5 text-[12px] font-semibold text-white shadow-[0_8px_24px_rgba(99,102,241,0.22)] transition hover:bg-indigo-400">
+            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+            Upload
+          </button>
+        </div>
       </div>
 
-      <div class="flex gap-2">
-        <button id="share-vault-btn" class="flex items-center gap-2 rounded-lg border border-white/[0.09] bg-white/[0.035] px-3.5 py-2.5 text-[12px] font-medium text-slate-300 transition hover:bg-white/[0.08] hover:text-white">
-          <i data-lucide="share-2" class="w-4 h-4"></i>
-          Share
-        </button>
-        <button id="upload-trigger-btn" class="flex items-center gap-2 rounded-lg bg-indigo-500 px-3.5 py-2.5 text-[12px] font-semibold text-white shadow-[0_8px_24px_rgba(99,102,241,0.22)] transition hover:bg-indigo-400">
-          <i data-lucide="upload-cloud" class="w-4 h-4"></i>
-          Upload File
-        </button>
-        <input type="file" id="file-input" class="hidden" multiple />
-      </div>
-    </div>
-
-    <!-- Storage & Stat Cards -->
-    <div class="mb-8 grid gap-4 xl:grid-cols-[1.35fr_1fr_1fr]">
-      <div class="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-indigo-500/[0.16] via-[#171828] to-cyan-400/[0.06] p-5">
-        <div class="relative flex items-center gap-5">
-          <!-- Circular Progress -->
-          <div class="relative h-24 w-24 shrink-0">
-            <svg class="h-24 w-24 -rotate-90" viewBox="0 0 44 44">
-              <circle cx="22" cy="22" r="17" stroke="rgba(255,255,255,0.08)" stroke-width="3.5" fill="none"></circle>
-              <circle cx="22" cy="22" r="17" stroke="#22d3ee" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="28" fill="none"></circle>
-            </svg>
-            <div class="absolute inset-0 flex flex-col items-center justify-center">
-              <span class="text-lg font-semibold tracking-tight text-white">74%</span>
-              <span class="text-[8px] uppercase tracking-[0.16em] text-slate-500">used</span>
+      <!-- Stats Cards -->
+      <div class="mb-8 grid gap-4 xl:grid-cols-[1.35fr_1fr_1fr]">
+        <!-- Progress Ring Card -->
+        <div class="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-indigo-500/[0.16] via-[#171828] to-cyan-400/[0.06] p-5 transition-transform hover:-translate-y-0.5">
+          <div class="absolute -right-10 -top-20 h-44 w-44 rounded-full bg-indigo-500/20 blur-3xl"></div>
+          <div class="relative flex items-center gap-5">
+            <div class="relative h-28 w-28 shrink-0">
+              <svg class="h-28 w-28 -rotate-90" viewBox="0 0 44 44" fill="none">
+                <circle cx="22" cy="22" r="17" stroke="rgba(255,255,255,0.08)" stroke-width="3.5" />
+                <circle cx="22" cy="22" r="17" stroke="url(#usage)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="24" />
+                <defs>
+                  <linearGradient id="usage" x1="5" y1="8" x2="38" y2="36">
+                    <stop stop-color="#818cf8" />
+                    <stop offset="1" stop-color="#22d3ee" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span class="text-xl font-semibold tracking-tight text-white">78%</span>
+                <span class="text-[9px] uppercase tracking-[0.16em] text-slate-500">used</span>
+              </div>
             </div>
+            <div>
+              <div class="mb-1 text-[11px] font-medium text-slate-400">Storage overview</div>
+              <div class="text-[21px] font-semibold tracking-[-0.03em] text-white">
+                7.8 <span class="text-sm font-normal text-slate-500">/ 10 GB</span>
+              </div>
+              <div class="mt-1.5 flex items-center gap-1.5 text-[11px] text-cyan-300">
+                <i data-lucide="arrow-down-to-line" class="w-3 h-3"></i>
+                2.4 GB this month
+              </div>
+            </div>
+          </div>
+          <div class="relative mt-5 flex gap-4 border-t border-white/[0.08] pt-4 text-[10px] text-slate-500">
+            <span><i class="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-indigo-400"></i>Media 5.2 GB</span>
+            <span><i class="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-cyan-300"></i>Documents 1.8 GB</span>
+          </div>
+        </div>
+
+        <!-- Shared Activity Card -->
+        <div class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5 transition-transform hover:-translate-y-0.5">
+          <div class="mb-5 flex items-center justify-between">
+            <span class="text-[11px] font-medium text-slate-500">Shared activity</span>
+            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-400/10 text-cyan-300">
+              <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+            </div>
+          </div>
+          <div class="text-[25px] font-semibold tracking-[-0.04em] text-white">
+            24 <span class="text-sm font-normal text-slate-500">active links</span>
+          </div>
+          <div class="mt-3 flex items-center gap-2 text-[11px] text-emerald-300">
+            <span class="flex -space-x-1.5">
+              <span class="h-5 w-5 rounded-full border-2 border-[#12151c] bg-rose-300"></span>
+              <span class="h-5 w-5 rounded-full border-2 border-[#12151c] bg-cyan-300"></span>
+              <span class="h-5 w-5 rounded-full border-2 border-[#12151c] bg-amber-200"></span>
+            </span>
+            +6 collaborators this week
+          </div>
+        </div>
+
+        <!-- Vault Activity Card -->
+        <div class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5 transition-transform hover:-translate-y-0.5">
+          <div class="mb-5 flex items-center justify-between">
+            <span class="text-[11px] font-medium text-slate-500">Vault activity</span>
+            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-400/10 text-indigo-300">
+              <i data-lucide="activity" class="w-3.5 h-3.5"></i>
+            </div>
+          </div>
+          <div class="text-[25px] font-semibold tracking-[-0.04em] text-white">
+            18.4 GB <span class="text-sm font-normal text-slate-500">synced</span>
+          </div>
+          <div class="mt-3 flex items-center gap-2 text-[11px] text-slate-500">
+            <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+            Last sync <span class="text-slate-300">just now</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls & View Bar -->
+      <div class="mb-5 flex items-center justify-between">
+        <div>
+          <h2 id="view-title" class="text-[16px] font-semibold tracking-[-0.02em] text-white">Recent files</h2>
+          <p id="item-count" class="mt-1 text-[11px] text-slate-600">8 items in your vault</p>
+        </div>
+        <div class="flex rounded-lg border border-white/[0.07] bg-white/[0.025] p-0.5">
+          <button id="btn-grid" class="rounded-md p-1.5 bg-white/[0.1] text-white">
+            <i data-lucide="grid-2x2" class="w-3.5 h-3.5"></i>
+          </button>
+          <button id="btn-list" class="rounded-md p-1.5 text-slate-600">
+            <i data-lucide="layout-list" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="mb-5 flex gap-2 overflow-x-auto pb-1" id="filter-container">
+        <button class="filter-tab whitespace-nowrap rounded-full border px-3 py-1.5 text-[11px] border-indigo-400/30 bg-indigo-400/10 text-indigo-200" data-filter="All types">All types</button>
+        <button class="filter-tab whitespace-nowrap rounded-full border border-white/[0.07] px-3 py-1.5 text-[11px] text-slate-600 hover:border-white/[0.14] hover:text-slate-300" data-filter="Media">Media</button>
+        <button class="filter-tab whitespace-nowrap rounded-full border border-white/[0.07] px-3 py-1.5 text-[11px] text-slate-600 hover:border-white/[0.14] hover:text-slate-300" data-filter="Video">Video</button>
+        <button class="filter-tab whitespace-nowrap rounded-full border border-white/[0.07] px-3 py-1.5 text-[11px] text-slate-600 hover:border-white/[0.14] hover:text-slate-300" data-filter="Audio">Audio</button>
+        <button class="filter-tab whitespace-nowrap rounded-full border border-white/[0.07] px-3 py-1.5 text-[11px] text-slate-600 hover:border-white/[0.14] hover:text-slate-300" data-filter="Document">Document</button>
+      </div>
+
+      <!-- File Grid / List Container -->
+      <div id="file-container" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"></div>
+
+      <!-- Folders Section -->
+      <div class="mt-10 mb-5 flex items-center justify-between">
+        <div>
+          <h2 class="text-[16px] font-semibold tracking-[-0.02em] text-white">Your folders</h2>
+          <p class="mt-1 text-[11px] text-slate-600">Keep your projects close</p>
+        </div>
+        <button class="text-[11px] font-medium text-indigo-300 hover:text-indigo-200">View all</button>
+      </div>
+
+      <div class="grid gap-3 md:grid-cols-3" id="folders-container">
+        <button class="folder-btn flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.025] p-4 text-left hover:border-white/[0.14] hover:bg-white/[0.04]" data-folder="Projects">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.05]">
+            <i data-lucide="folder-open" class="w-4 h-4 text-indigo-400"></i>
           </div>
           <div>
-            <div class="mb-1 text-[11px] font-medium text-slate-400">Storage Overview</div>
-            <div class="text-[21px] font-semibold tracking-[-0.03em] text-white">
-              7.4 <span class="text-sm font-normal text-slate-500">/ 10 GB</span>
+            <div class="text-[12px] font-medium text-slate-200">Projects</div>
+            <div class="mt-1 text-[10px] text-slate-600">42 items · 4.8 GB</div>
+          </div>
+          <i data-lucide="more-horizontal" class="ml-auto w-3.5 h-3.5 text-slate-700"></i>
+        </button>
+
+        <button class="folder-btn flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.025] p-4 text-left hover:border-white/[0.14] hover:bg-white/[0.04]" data-folder="Brand">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.05]">
+            <i data-lucide="folder-open" class="w-4 h-4 text-cyan-400"></i>
+          </div>
+          <div>
+            <div class="text-[12px] font-medium text-slate-200">Brand</div>
+            <div class="mt-1 text-[10px] text-slate-600">28 items · 3.2 GB</div>
+          </div>
+          <i data-lucide="more-horizontal" class="ml-auto w-3.5 h-3.5 text-slate-700"></i>
+        </button>
+
+        <button class="folder-btn flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.025] p-4 text-left hover:border-white/[0.14] hover:bg-white/[0.04]" data-folder="Archive">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.05]">
+            <i data-lucide="folder-open" class="w-4 h-4 text-amber-300"></i>
+          </div>
+          <div>
+            <div class="text-[12px] font-medium text-slate-200">Archive</div>
+            <div class="mt-1 text-[10px] text-slate-600">58 items · 1.9 GB</div>
+          </div>
+          <i data-lucide="more-horizontal" class="ml-auto w-3.5 h-3.5 text-slate-700"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- MEDIA PLAYER VIEW -->
+    <div id="player-view" class="hidden">
+      <div class="mb-8">
+        <button id="btn-back" class="mb-4 text-[12px] text-indigo-300 hover:text-indigo-200">← Back to dashboard</button>
+        <div class="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-indigo-300">
+          <i data-lucide="video" class="w-3.5 h-3.5"></i>
+          Media player
+        </div>
+        <h1 class="text-[28px] font-semibold tracking-[-0.04em] text-white">Preview in your vault</h1>
+        <p class="mt-1.5 text-[13px] text-slate-500">Stream media securely without leaving CloudVault.</p>
+      </div>
+
+      <div class="grid gap-5 lg:grid-cols-[1fr_300px]">
+        <div class="overflow-hidden rounded-2xl border border-white/[0.08] bg-black/30">
+          <div class="relative aspect-video overflow-hidden bg-gradient-to-br from-[#12133b] via-[#0e1727] to-[#062d38]">
+            <div class="absolute inset-0 opacity-40" style="background-image: radial-gradient(circle at 30% 30%, #818cf8 0, transparent 2px), radial-gradient(circle at 70% 70%, #22d3ee 0, transparent 2px); background-size: 42px 42px, 68px 68px;"></div>
+            
+            <div class="absolute inset-0 flex items-center justify-center">
+              <button id="btn-play-toggle" class="flex h-16 w-16 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-2xl backdrop-blur-md transition hover:scale-105 hover:bg-white/20">
+                <i data-lucide="play" id="play-icon" class="w-6 h-6 ml-0.5 fill-current"></i>
+              </button>
             </div>
-            <div class="mt-1.5 flex items-center gap-1.5 text-[11px] text-cyan-300">
-              <i data-lucide="arrow-down-to-line" class="w-3.5 h-3.5"></i>
-              Backblaze B2 Synced
+
+            <div class="absolute left-5 top-5 flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-2.5 py-1.5 text-[10px] text-slate-300 backdrop-blur-md">
+              <span class="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_8px_#22d3ee]"></span>
+              Streaming preview <span class="text-slate-500">·</span> 4K
+            </div>
+
+            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-5 pb-4 pt-12">
+              <div id="timeline-bar" class="mb-3 h-1 cursor-pointer rounded-full bg-white/20">
+                <div id="timeline-progress" class="relative h-full rounded-full bg-gradient-to-r from-indigo-400 to-cyan-300" style="width: 38%;">
+                  <span class="absolute -right-1.5 -top-1 h-3 w-3 rounded-full bg-white shadow-lg"></span>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-4 text-white">
+                <button id="btn-play-mini"><i data-lucide="play" id="play-icon-mini" class="w-4 h-4 fill-current"></i></button>
+                <span class="text-[11px] tabular-nums text-slate-300">00:52 <span id="player-duration-text" class="text-slate-600">/ 02:18</span></span>
+                <div class="ml-auto flex items-center gap-4">
+                  <button id="btn-speed" class="text-[10px] text-slate-300">1×</button>
+                  <button><i data-lucide="zoom-in" class="w-4 h-4"></i></button>
+                  <button><i data-lucide="sliders-horizontal" class="w-4 h-4"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between border-t border-white/[0.07] px-5 py-4">
+            <div>
+              <div id="player-file-name" class="text-[13px] font-medium text-white">Aurora launch film.mp4</div>
+              <div id="player-file-meta" class="mt-1 text-[11px] text-slate-600">4K · H.265 · 1.84 GB</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="flex items-center gap-2 rounded-lg border border-white/[0.08] px-3 py-2 text-[11px] text-slate-300 hover:bg-white/[0.07]">
+                <i data-lucide="share-2" class="w-3.5 h-3.5"></i> Share
+              </button>
+              <button class="rounded-lg border border-white/[0.08] p-2 text-slate-400 hover:bg-white/[0.07] hover:text-white">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+              </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5">
-        <div class="mb-5 flex items-center justify-between">
-          <span class="text-[11px] font-medium text-slate-500">Shared Activity</span>
-          <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-400/10 text-cyan-300">
-            <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+        <aside class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5">
+          <div class="mb-5 flex items-center justify-between">
+            <h3 class="text-[13px] font-semibold text-white">Now playing</h3>
+            <i data-lucide="more-horizontal" class="w-4 h-4 text-slate-600"></i>
           </div>
-        </div>
-        <div class="text-[25px] font-semibold tracking-[-0.04em] text-white">
-          12 <span class="text-sm font-normal text-slate-500">active links</span>
-        </div>
-        <div class="mt-3 flex items-center gap-2 text-[11px] text-emerald-300">
-          <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-          CDN Worker Proxy Active
-        </div>
-      </div>
-
-      <div class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5">
-        <div class="mb-5 flex items-center justify-between">
-          <span class="text-[11px] font-medium text-slate-500">Database Status</span>
-          <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-400/10 text-indigo-300">
-            <i data-lucide="activity" class="w-3.5 h-3.5"></i>
+          <div id="player-aside-icon"></div>
+          <h2 id="player-aside-name" class="mt-3 text-[14px] font-medium text-white">Aurora launch film</h2>
+          <p class="mt-1 text-[11px] text-slate-600">Added today · Projects</p>
+          <div class="my-5 h-px bg-white/[0.07]"></div>
+          <div class="space-y-4 text-[11px]">
+            <div class="flex justify-between"><span class="text-slate-600">File type</span><span class="text-slate-300">MP4 video</span></div>
+            <div class="flex justify-between"><span class="text-slate-600">Resolution</span><span class="text-slate-300">3840 × 2160</span></div>
+            <div class="flex justify-between"><span class="text-slate-600">Frame rate</span><span class="text-slate-300">24 fps</span></div>
+            <div class="flex justify-between">
+              <span class="text-slate-600">Access</span>
+              <span class="flex items-center gap-1 text-emerald-300">
+                <i data-lucide="lock-keyhole" class="w-3 h-3"></i> Private
+              </span>
+            </div>
           </div>
-        </div>
-        <div class="text-[25px] font-semibold tracking-[-0.04em] text-white">
-          Supabase <span class="text-sm font-normal text-slate-500">Connected</span>
-        </div>
-        <div class="mt-3 flex items-center gap-2 text-[11px] text-slate-500">
-          <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-          Latency: <span class="text-slate-300">24ms</span>
-        </div>
+          <button class="mt-7 flex w-full items-center justify-center gap-2 rounded-lg bg-white/[0.07] py-2.5 text-[11px] font-medium text-slate-200 hover:bg-white/[0.12]">
+            <i data-lucide="link-2" class="w-3.5 h-3.5"></i> Create share link
+          </button>
+        </aside>
       </div>
     </div>
-
-    <!-- Media Player View Area (Toggles dynamically) -->
-    <div id="player-container" class="hidden mb-10 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0e1017] p-6">
-      <div class="mb-4 flex items-center justify-between">
-        <div>
-          <span class="text-[10px] font-semibold uppercase tracking-widest text-cyan-400">Streaming Mode</span>
-          <h2 id="player-filename" class="text-lg font-medium text-white">Media Preview</h2>
-        </div>
-        <button id="close-player-btn" class="text-slate-400 hover:text-white text-sm">✕ Close Player</button>
-      </div>
-      <div class="aspect-video w-full rounded-xl bg-black/60 flex items-center justify-center overflow-hidden border border-white/5">
-        <video id="vault-video" controls class="w-full h-full object-contain hidden"></video>
-        <audio id="vault-audio" controls class="w-3/4 hidden"></audio>
-        <div id="player-placeholder" class="text-center p-8">
-          <i data-lucide="play-circle" class="w-16 h-16 mx-auto mb-3 text-indigo-400"></i>
-          <p class="text-sm text-slate-400">Select any video or audio file below to start streaming.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Filter Buttons -->
-    <div class="mb-6 flex gap-2 overflow-x-auto pb-1">
-      <button class="filter-btn active rounded-full border border-indigo-400/30 bg-indigo-400/10 px-3.5 py-1.5 text-[11px] text-indigo-200" data-filter="all">All Files</button>
-      <button class="filter-btn rounded-full border border-white/[0.07] px-3.5 py-1.5 text-[11px] text-slate-500 hover:text-slate-300" data-filter="video">Videos</button>
-      <button class="filter-btn rounded-full border border-white/[0.07] px-3.5 py-1.5 text-[11px] text-slate-500 hover:text-slate-300" data-filter="audio">Audio</button>
-      <button class="filter-btn rounded-full border border-white/[0.07] px-3.5 py-1.5 text-[11px] text-slate-500 hover:text-slate-300" data-filter="document">Documents</button>
-    </div>
-
-    <!-- File Grid -->
-    <div id="files-grid" class="grid gap-3.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-      <!-- Dynamic files injected by JS -->
-    </div>
-
   </div>
 
   <script>
-    // Lucide Icons initialization
-    lucide.createIcons();
-
-    // Demo File State
-    let fileCatalog = [
-      { id: 1, name: 'Aurora launch film.mp4', kind: 'video', size: '1.84 GB', updated: '12 min ago', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' },
-      { id: 2, name: 'Soundtrack · final mix.wav', kind: 'audio', size: '842 MB', updated: '48 min ago', url: '' },
-      { id: 3, name: 'Campaign brief.pdf', kind: 'document', size: '8.4 MB', updated: '2 days ago', url: '' },
-      { id: 4, name: 'Brand system v4.fig', kind: 'document', size: '126 MB', updated: 'Yesterday', url: '' },
-      { id: 5, name: 'Product reel selects.mp4', kind: 'video', size: '624 MB', updated: 'Yesterday', url: '' },
-      { id: 6, name: 'Founder interview.mp3', kind: 'audio', size: '214 MB', updated: 'Sun', url: '' }
+    // Exact Files Data
+    const initialFiles = [
+      { id: 'file-aurora', name: 'Aurora launch film.mp4', kind: 'video', size: '1.84 GB', updated: '12 min ago', color: 'indigo', folder: 'Projects', starred: true, duration: '02:18', meta: '4K · H.265' },
+      { id: 'file-soundtrack', name: 'Soundtrack · final mix.wav', kind: 'audio', size: '842 MB', updated: '48 min ago', color: 'cyan', folder: 'Projects', starred: true, duration: '03:52', meta: '24-bit · 48 kHz' },
+      { id: 'file-brand', name: 'Brand system v4.fig', kind: 'design', size: '126 MB', updated: 'Yesterday', color: 'violet', folder: 'Brand', starred: false, meta: 'Figma file' },
+      { id: 'file-reel', name: 'Product reel selects.mov', kind: 'video', size: '624 MB', updated: 'Yesterday', color: 'orange', folder: 'Projects', starred: false, duration: '00:44', meta: '1080p · ProRes' },
+      { id: 'file-brief', name: 'Campaign brief.pdf', kind: 'document', size: '8.4 MB', updated: 'Mon', color: 'rose', folder: 'Brand', starred: false, meta: '18 pages' },
+      { id: 'file-stills', name: 'Campaign stills.zip', kind: 'archive', size: '2.6 GB', updated: 'Sun', color: 'emerald', folder: 'Brand', starred: false, meta: '42 files' },
+      { id: 'file-interview', name: 'Founder interview.mp3', kind: 'audio', size: '214 MB', updated: 'Sun', color: 'blue', folder: 'Archive', starred: false, duration: '21:05', meta: '320 kbps' },
+      { id: 'file-notes', name: 'Production notes.txt', kind: 'document', size: '42 KB', updated: 'Sat', color: 'slate', folder: 'Archive', starred: false, meta: 'Plain text' }
     ];
 
-    const filesGrid = document.getElementById('files-grid');
-    const playerContainer = document.getElementById('player-container');
-    const playerFilename = document.getElementById('player-filename');
-    const vaultVideo = document.getElementById('vault-video');
-    const vaultAudio = document.getElementById('vault-audio');
-    const playerPlaceholder = document.getElementById('player-placeholder');
-    const fileInput = document.getElementById('file-input');
+    let files = [...initialFiles];
+    let currentFilter = 'All types';
+    let currentLayout = 'grid';
+    let isPlaying = false;
+    let progress = 38;
+    let speed = '1×';
+    let playInterval = null;
 
-    function renderFiles(filter = 'all') {
-      filesGrid.innerHTML = '';
-      const filtered = filter === 'all' ? fileCatalog : fileCatalog.filter(f => f.kind === filter);
+    const colors = {
+      indigo: 'text-indigo-300 bg-indigo-400/10',
+      cyan: 'text-cyan-300 bg-cyan-400/10',
+      violet: 'text-violet-300 bg-violet-400/10',
+      orange: 'text-orange-300 bg-orange-400/10',
+      rose: 'text-rose-300 bg-rose-400/10',
+      emerald: 'text-emerald-300 bg-emerald-400/10',
+      blue: 'text-blue-300 bg-blue-400/10',
+      slate: 'text-slate-300 bg-slate-400/10',
+    };
 
-      filtered.forEach(file => {
-        const card = document.createElement('div');
-        card.className = 'group cursor-pointer rounded-2xl border border-white/[0.08] bg-white/[0.025] p-3.5 transition hover:border-indigo-400/30 hover:bg-white/[0.045]';
-        
-        let iconName = 'file-text';
-        if (file.kind === 'video') iconName = 'video';
-        if (file.kind === 'audio') iconName = 'music';
+    function getIconName(kind) {
+      if (kind === 'video') return 'file-video';
+      if (kind === 'audio') return 'file-audio';
+      if (kind === 'archive') return 'file-archive';
+      if (kind === 'document') return 'file-text';
+      return 'file-image';
+    }
 
-        card.innerHTML = `
-          <div class="relative mb-3 flex h-28 w-full items-center justify-center rounded-xl bg-gradient-to-br from-white/[0.04] to-transparent">
-            <i data-lucide="${iconName}" class="w-8 h-8 text-indigo-400/80 group-hover:scale-110 transition-transform"></i>
-          </div>
-          <div class="flex items-start justify-between">
-            <div class="truncate text-[12px] font-medium text-slate-200 group-hover:text-white">${file.name}</div>
-          </div>
-          <div class="mt-1 flex items-center justify-between text-[10px] text-slate-600">
-            <span>${file.size}</span>
-            <span>${file.updated}</span>
-          </div>
-        `;
+    function renderFiles() {
+      const container = document.getElementById('file-container');
+      container.innerHTML = '';
 
-        card.addEventListener('click', () => openFile(file));
-        filesGrid.appendChild(card);
+      const visible = files.filter(f => {
+        if (currentFilter === 'All types') return true;
+        if (currentFilter === 'Media') return ['video', 'audio'].includes(f.kind);
+        return f.kind.toLowerCase() === currentFilter.toLowerCase();
+      });
+
+      document.getElementById('item-count').innerText = `${visible.length} items in your vault`;
+
+      if (currentLayout === 'grid') {
+        container.className = 'grid gap-3 sm:grid-cols-2 xl:grid-cols-4';
+      } else {
+        container.className = 'space-y-2';
+      }
+
+      visible.forEach(file => {
+        const item = document.createElement('div');
+        const icon = getIconName(file.kind);
+        const colorClass = colors[file.color] || colors.indigo;
+
+        if (currentLayout === 'grid') {
+          item.className = 'group text-left rounded-2xl border border-white/[0.08] bg-white/[0.025] p-3.5 hover:border-indigo-300/25 hover:bg-white/[0.045] transition-all cursor-pointer';
+          item.innerHTML = `
+            <div class="relative mb-3 flex h-32 w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-white/[0.06] to-transparent">
+              ${file.kind === 'video' ? `
+                <div class="absolute inset-0 bg-gradient-to-br ${file.color === 'indigo' ? 'from-indigo-950 via-[#171832] to-cyan-950' : 'from-orange-950 via-[#241c2a] to-rose-950'}"></div>
+                <div class="relative z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur-sm">
+                  <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+                </div>
+                <span class="absolute bottom-2 right-2 rounded-md bg-black/40 px-1.5 py-1 text-[10px] text-slate-300 backdrop-blur-sm">${file.duration || ''}</span>
+              ` : `
+                <span class="flex h-12 w-12 items-center justify-center rounded-lg ${colorClass}">
+                  <i data-lucide="${icon}" class="w-6 h-6"></i>
+                </span>
+              `}
+            </div>
+            <div class="flex items-start justify-between gap-2">
+              <span class="truncate text-[12px] font-medium text-slate-200 group-hover:text-white">${file.name}</span>
+              ${file.starred ? '<i data-lucide="sparkles" class="w-3 h-3 text-amber-300 shrink-0"></i>' : ''}
+            </div>
+            <div class="mt-1.5 flex items-center gap-2 text-[10px] text-slate-600">
+              <span>${file.size}</span><span class="h-0.5 w-0.5 rounded-full bg-slate-700"></span><span>${file.updated}</span>
+            </div>
+          `;
+        } else {
+          item.className = 'flex items-center gap-4 rounded-xl border border-white/[0.07] bg-white/[0.025] px-4 py-3 hover:border-indigo-300/25 hover:bg-white/[0.045] transition-all cursor-pointer';
+          item.innerHTML = `
+            <span class="flex h-10 w-10 items-center justify-center rounded-lg ${colorClass} shrink-0">
+              <i data-lucide="${icon}" class="w-5 h-5"></i>
+            </span>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-start justify-between gap-2">
+                <span class="truncate text-[12px] font-medium text-slate-200 group-hover:text-white">${file.name}</span>
+                ${file.starred ? '<i data-lucide="sparkles" class="w-3 h-3 text-amber-300 shrink-0"></i>' : ''}
+              </div>
+              <div class="mt-1 flex items-center gap-2 text-[10px] text-slate-600">
+                <span>${file.size}</span><span class="h-0.5 w-0.5 rounded-full bg-slate-700"></span><span>${file.updated}</span>
+              </div>
+            </div>
+            <div class="hidden w-28 text-[11px] text-slate-600 md:block">${file.folder}</div>
+          `;
+        }
+
+        item.addEventListener('click', () => {
+          if (file.kind === 'video' || file.kind === 'audio') {
+            openPlayer(file);
+          }
+        });
+
+        container.appendChild(item);
       });
 
       lucide.createIcons();
     }
 
-    function openFile(file) {
-      if (file.kind === 'video' || file.kind === 'audio') {
-        playerContainer.classList.remove('hidden');
-        playerFilename.innerText = file.name;
-        window.scrollTo({ top: playerContainer.offsetTop - 20, behavior: 'smooth' });
-
-        if (file.kind === 'video') {
-          vaultAudio.classList.add('hidden');
-          playerPlaceholder.classList.add('hidden');
-          vaultVideo.classList.remove('hidden');
-          vaultVideo.src = file.url || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
-          vaultVideo.play();
-        }
-      } else {
-        alert('File selected: ' + file.name + ' (' + file.size + ')');
-      }
+    function openPlayer(file) {
+      document.getElementById('dashboard-view').classList.add('hidden');
+      document.getElementById('player-view').classList.remove('hidden');
+      document.getElementById('player-file-name').innerText = file.name;
+      document.getElementById('player-file-meta').innerText = `${file.meta || '4K · H.265'} · ${file.size}`;
+      document.getElementById('player-aside-name').innerText = file.name.replace(/\.[^/.]+$/, '');
+      document.getElementById('player-duration-text').innerText = `/ ${file.duration || '02:18'}`;
+      
+      const asideIcon = document.getElementById('player-aside-icon');
+      const icon = getIconName(file.kind);
+      asideIcon.innerHTML = `<span class="flex h-12 w-12 items-center justify-center rounded-lg ${colors[file.color] || colors.indigo}"><i data-lucide="${icon}" class="w-6 h-6"></i></span>`;
+      
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      lucide.createIcons();
     }
 
-    document.getElementById('close-player-btn').addEventListener('click', () => {
-      vaultVideo.pause();
-      vaultAudio.pause();
-      playerContainer.classList.add('hidden');
+    document.getElementById('btn-back').addEventListener('click', () => {
+      document.getElementById('player-view').classList.add('hidden');
+      document.getElementById('dashboard-view').classList.remove('hidden');
+      clearInterval(playInterval);
+      isPlaying = false;
     });
 
-    document.getElementById('upload-trigger-btn').addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', (e) => {
-      const files = Array.from(e.target.files);
-      if (!files.length) return;
-      const f = files[0];
-      const kind = f.type.startsWith('video') ? 'video' : f.type.startsWith('audio') ? 'audio' : 'document';
-      fileCatalog.unshift({
-        id: Date.now(),
-        name: f.name,
-        kind: kind,
-        size: (f.size / (1024 * 1024)).toFixed(1) + ' MB',
-        updated: 'Just now',
-        url: URL.createObjectURL(f)
-      });
+    document.getElementById('btn-grid').addEventListener('click', () => {
+      currentLayout = 'grid';
+      document.getElementById('btn-grid').className = 'rounded-md p-1.5 bg-white/[0.1] text-white';
+      document.getElementById('btn-list').className = 'rounded-md p-1.5 text-slate-600';
       renderFiles();
     });
 
-    document.querySelectorAll('.filter-btn').forEach(btn => {
+    document.getElementById('btn-list').addEventListener('click', () => {
+      currentLayout = 'list';
+      document.getElementById('btn-list').className = 'rounded-md p-1.5 bg-white/[0.1] text-white';
+      document.getElementById('btn-grid').className = 'rounded-md p-1.5 text-slate-600';
+      renderFiles();
+    });
+
+    document.querySelectorAll('.filter-tab').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn').forEach(b => {
-          b.className = 'filter-btn rounded-full border border-white/[0.07] px-3.5 py-1.5 text-[11px] text-slate-500 hover:text-slate-300';
+        document.querySelectorAll('.filter-tab').forEach(b => {
+          b.className = 'filter-tab whitespace-nowrap rounded-full border border-white/[0.07] px-3 py-1.5 text-[11px] text-slate-600 hover:border-white/[0.14] hover:text-slate-300';
         });
-        btn.className = 'filter-btn active rounded-full border border-indigo-400/30 bg-indigo-400/10 px-3.5 py-1.5 text-[11px] text-indigo-200';
-        renderFiles(btn.getAttribute('data-filter'));
+        btn.className = 'filter-tab whitespace-nowrap rounded-full border px-3 py-1.5 text-[11px] border-indigo-400/30 bg-indigo-400/10 text-indigo-200';
+        currentFilter = btn.getAttribute('data-filter');
+        renderFiles();
       });
+    });
+
+    document.getElementById('btn-upload').addEventListener('click', () => document.getElementById('file-input').click());
+    document.getElementById('file-input').addEventListener('change', (e) => {
+      const picked = Array.from(e.target.files);
+      if (!picked.length) return;
+      const uploaded = picked[0];
+      const kind = uploaded.type.startsWith('video') ? 'video' : uploaded.type.startsWith('audio') ? 'audio' : 'document';
+      files.unshift({
+        id: `upload-${Date.now()}`,
+        name: uploaded.name,
+        kind: kind,
+        size: `${(uploaded.size / (1024 * 1024)).toFixed(1)} MB`,
+        updated: 'Just now',
+        color: 'indigo',
+        folder: 'Projects',
+        starred: false,
+        meta: 'Ready to sync',
+      });
+      renderFiles();
     });
 
     renderFiles();
