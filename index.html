@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CloudVault Pro Workspace</title>
+  <title>CloudVault Workspace</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -29,9 +29,9 @@
       </div>
       <h2 class="text-xl font-semibold text-white">Vault Passcode</h2>
       <p class="mt-1 text-xs text-slate-400">Enter your 4-digit PIN to access storage</p>
-      <input id="pin-input" type="password" maxlength="6" placeholder="Enter PIN (Default: 1234)" class="mt-5 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center text-lg tracking-widest text-white outline-none focus:border-indigo-400" />
+      <input id="pin-input" type="password" maxlength="6" autofocus placeholder="Hint: Muskan's Birth Date" class="mt-5 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center text-sm tracking-widest text-white outline-none placeholder:text-xs placeholder:tracking-normal placeholder:text-slate-500 focus:border-indigo-400" />
       <button id="btn-unlock" class="mt-4 w-full rounded-xl bg-indigo-500 py-3 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-indigo-400">Unlock Vault</button>
-      <p id="pin-error" class="mt-2 hidden text-xs text-rose-400">Incorrect PIN code</p>
+      <p id="pin-error" class="mt-2 hidden text-xs text-rose-400">Incorrect PIN code. Try again.</p>
     </div>
   </div>
 
@@ -48,9 +48,14 @@
             Multi-Device Cloud Sync
           </div>
           <h1 class="text-[28px] font-semibold tracking-[-0.04em] text-white">
-            CloudVault Storage <span class="text-xl text-indigo-400">✦</span>
+            CloudVault <span class="text-xl text-indigo-400">✦</span>
           </h1>
-          <p class="mt-1.5 text-[13px] text-slate-400">Backblaze B2 Vault + Supabase Real-Time Sync.</p>
+          <p class="mt-1.5 text-[13px] text-slate-400">
+            Connected to Backblaze B2 & Supabase Cloud Sync.
+            <span class="ml-1 block font-medium text-[12px] text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-pink-400 to-cyan-300 sm:inline">
+              Made by Muskan's Raj ji
+            </span>
+          </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2.5">
@@ -105,6 +110,7 @@
           </div>
         </div>
 
+        <!-- Supabase Health Card -->
         <div class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5">
           <div class="mb-5 flex items-center justify-between">
             <span class="text-[11px] font-medium text-slate-400">Total Files Synced</span>
@@ -115,44 +121,41 @@
           <div id="stat-total-files" class="text-[25px] font-semibold tracking-[-0.04em] text-white">
             0 <span class="text-sm font-normal text-slate-500">files in database</span>
           </div>
-          <div class="mt-3 flex items-center gap-2 text-[11px] text-emerald-300">
-            <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-            Supabase DB Synchronized
+          <div id="supabase-status-badge" class="mt-3 flex items-center gap-2 text-[11px] text-emerald-300">
+            <span id="supabase-status-dot" class="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
+            <span id="supabase-status-text">Supabase DB Synchronized</span>
           </div>
         </div>
 
+        <!-- Backblaze Health Card -->
         <div class="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5">
           <div class="mb-5 flex items-center justify-between">
-            <span class="text-[11px] font-medium text-slate-400">Active Storage Folder</span>
+            <span class="text-[11px] font-medium text-slate-400">Backend Server</span>
             <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-400/10 text-indigo-300">
-              <i data-lucide="folder" class="h-3.5 w-3.5"></i>
+              <i data-lucide="zap" class="h-3.5 w-3.5"></i>
             </div>
           </div>
-          <div id="stat-active-folder" class="text-[25px] font-semibold tracking-[-0.04em] text-white">
-            All Folders
+          <div id="b2-status-title" class="text-[25px] font-semibold tracking-[-0.04em] text-white">
+            Checking...
           </div>
-          <div class="mt-3 flex items-center gap-2 text-[11px] text-slate-400">
-            <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-            Direct B2 Secure Pipeline
+          <div id="b2-status-badge" class="mt-3 flex items-center gap-2 text-[11px] text-emerald-300">
+            <span id="b2-status-dot" class="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
+            <span id="b2-status-text">Backblaze B2 Server Working</span>
           </div>
         </div>
       </div>
 
       <!-- Search, Sort & Folder Filter Bar -->
       <div class="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <!-- Live Search -->
         <div class="relative flex-1">
           <i data-lucide="search" class="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
           <input id="search-input" type="text" placeholder="Search files by name..." class="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] py-2.5 pl-10 pr-4 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-400/50" />
         </div>
 
-        <!-- Sort Select & Active Folder -->
         <div class="flex items-center gap-2">
           <select id="folder-select" class="rounded-xl border border-white/[0.08] bg-[#161822] px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-400">
-            <option value="ALL">📁 All Folders</option>
+            <option value="ALL">📁 All Folders (All Files)</option>
             <option value="Projects">📁 Projects</option>
-            <option value="Personal">📁 Personal</option>
-            <option value="Media">📁 Media</option>
           </select>
 
           <select id="sort-select" class="rounded-xl border border-white/[0.08] bg-[#161822] px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-400">
@@ -173,14 +176,14 @@
         <button class="filter-tab whitespace-nowrap rounded-full border border-white/[0.07] px-3.5 py-1.5 text-[11px] text-slate-400 hover:border-white/[0.14] hover:text-slate-200" data-filter="document">Documents</button>
       </div>
 
-      <!-- Drag & Drop Zone / Live File Grid -->
+      <!-- Live File Grid -->
       <div id="dropzone" class="min-h-[320px] rounded-3xl border-2 border-dashed border-white/[0.08] p-4 transition-all">
         <div id="file-container" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
         <div id="empty-state" class="hidden flex flex-col items-center justify-center py-20 text-center">
           <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.04] text-slate-500">
             <i data-lucide="inbox" class="h-7 w-7"></i>
           </div>
-          <p class="text-sm font-medium text-slate-300">No files found</p>
+          <p class="text-sm font-medium text-slate-300">No files in this view</p>
           <p class="mt-1 text-xs text-slate-500">Drag & drop files anywhere on this page or click Upload</p>
         </div>
       </div>
@@ -217,7 +220,7 @@
       </div>
     </div>
 
-    <!-- Upload Toast -->
+    <!-- Upload Progress Toast -->
     <div id="upload-toast" class="fixed bottom-5 right-5 z-50 hidden w-80 rounded-2xl border border-white/[0.1] bg-[#161822] p-4 shadow-2xl">
       <div class="flex items-center gap-3">
         <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-300">
@@ -240,11 +243,12 @@
     const BACKEND_API_URL = "https://cloudvault-backend-utgb.onrender.com";
     const SUPABASE_URL = "https://ryvpnnhfafiqyrfgaxle.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5dnBubmhmYWZpcXlyZmdheGxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNTE2OTksImV4cCI6MjA4ODYyNzY5OX0.MX8u9RiutpluQfVrUQ__l6NxBwMBm6S_gbNIeBv4MmU";
-    const VAULT_PIN = "1234"; // You can change this passcode
+    const VAULT_PIN = "1701";
 
     const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
     let liveFiles = [];
+    let knownFolders = new Set(['Projects', 'Personal', 'Media']);
     let currentFilter = 'All types';
     let currentFolder = 'ALL';
     let currentSort = 'newest';
@@ -262,16 +266,24 @@
         pinModal.classList.add('hidden');
       } else {
         pinModal.classList.remove('hidden');
+        pinInput.focus();
       }
     }
 
-    btnUnlock.addEventListener('click', () => {
+    function attemptUnlock() {
       if (pinInput.value === VAULT_PIN) {
         sessionStorage.setItem('cloudvault_unlocked', 'true');
         pinModal.classList.add('hidden');
+        pinError.classList.add('hidden');
       } else {
         pinError.classList.remove('hidden');
+        pinInput.value = '';
       }
+    }
+
+    btnUnlock.addEventListener('click', attemptUnlock);
+    pinInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') attemptUnlock();
     });
 
     document.getElementById('btn-lock').addEventListener('click', () => {
@@ -279,20 +291,91 @@
       location.reload();
     });
 
-    // --- 3. FETCH FILES & REAL ANALYTICS ---
+    // --- 3. HEALTH MONITORS ---
+    async function checkServerHealth() {
+      const b2Title = document.getElementById('b2-status-title');
+      const b2Badge = document.getElementById('b2-status-badge');
+      const b2Dot = document.getElementById('b2-status-dot');
+      const b2Text = document.getElementById('b2-status-text');
+
+      try {
+        const res = await fetch(`${BACKEND_API_URL}/api/health`);
+        const data = await res.json();
+        if (res.ok && data.status === 'ok') {
+          b2Title.innerText = "Online";
+          b2Badge.className = "mt-3 flex items-center gap-2 text-[11px] text-emerald-300";
+          b2Dot.className = "h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]";
+          b2Text.innerText = "Backblaze B2 Server Working";
+        } else {
+          throw new Error(data.message || "B2 Disconnected");
+        }
+      } catch (err) {
+        b2Title.innerText = "Error / Offline";
+        b2Badge.className = "mt-3 flex items-center gap-2 text-[11px] text-rose-400";
+        b2Dot.className = "h-1.5 w-1.5 rounded-full bg-rose-500 shadow-[0_0_8px_#f43f5e]";
+        b2Text.innerText = `Backblaze B2 Error (${err.message || 'Server waking up'})`;
+      }
+    }
+
+    function updateSupabaseStatus(isOk, errMsg = '') {
+      const supaBadge = document.getElementById('supabase-status-badge');
+      const supaDot = document.getElementById('supabase-status-dot');
+      const supaText = document.getElementById('supabase-status-text');
+
+      if (isOk) {
+        supaBadge.className = "mt-3 flex items-center gap-2 text-[11px] text-emerald-300";
+        supaDot.className = "h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]";
+        supaText.innerText = "Supabase DB Synchronized";
+      } else {
+        supaBadge.className = "mt-3 flex items-center gap-2 text-[11px] text-rose-400";
+        supaDot.className = "h-1.5 w-1.5 rounded-full bg-rose-500 shadow-[0_0_8px_#f43f5e]";
+        supaText.innerText = `Supabase Error: ${errMsg}`;
+      }
+    }
+
+    // --- 4. DATA ENGINE ---
     async function loadFiles() {
-      if (!supabaseClient) return;
+      if (!supabaseClient) {
+        updateSupabaseStatus(false, 'Supabase client missing');
+        return;
+      }
 
       const { data, error } = await supabaseClient
         .from('files')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && data) {
-        liveFiles = data;
+      if (error) {
+        console.error("Supabase load error:", error);
+        updateSupabaseStatus(false, error.message);
+        return;
       }
+
+      updateSupabaseStatus(true);
+      liveFiles = data || [];
+
+      liveFiles.forEach(f => {
+        if (f.folder && f.folder.trim()) knownFolders.add(f.folder.trim());
+      });
+
+      populateFolderDropdown();
       updateStorageAnalytics(liveFiles);
       renderFiles();
+    }
+
+    function populateFolderDropdown() {
+      const select = document.getElementById('folder-select');
+      const prevVal = select.value;
+      select.innerHTML = '<option value="ALL">📁 All Folders (All Files)</option>';
+
+      knownFolders.forEach(folder => {
+        const opt = document.createElement('option');
+        opt.value = folder;
+        opt.innerText = `📁 ${folder}`;
+        select.appendChild(opt);
+      });
+
+      select.value = knownFolders.has(prevVal) || prevVal === 'ALL' ? prevVal : 'ALL';
     }
 
     function parseBytes(file) {
@@ -312,7 +395,7 @@
 
     function updateStorageAnalytics(files) {
       const totalBytes = files.reduce((acc, f) => acc + parseBytes(f), 0);
-      const quotaBytes = 10 * 1024 * 1024 * 1024; // 10 GB
+      const quotaBytes = 10 * 1024 * 1024 * 1024;
       const usedPct = Math.min(100, ((totalBytes / quotaBytes) * 100)).toFixed(1);
       const usedGB = (totalBytes / (1024 * 1024 * 1024)).toFixed(2);
       const usedMB = (totalBytes / (1024 * 1024)).toFixed(1);
@@ -321,8 +404,8 @@
       document.getElementById('storage-ring-circle').style.strokeDashoffset = offset;
       document.getElementById('storage-pct-label').innerText = `${usedPct}%`;
       document.getElementById('storage-used-gb').innerText = usedGB;
-      document.getElementById('storage-bytes-count').innerText = `${usedMB} MB active`;
-      document.getElementById('stat-total-files').innerHTML = `${files.length} <span class="text-sm font-normal text-slate-500">files indexed</span>`;
+      document.getElementById('storage-bytes-count').innerText = `${usedMB} MB active storage`;
+      document.getElementById('stat-total-files').innerHTML = `${files.length} <span class="text-sm font-normal text-slate-500">files in database</span>`;
 
       const mediaBytes = files.filter(f => ['video', 'audio', 'image'].includes(f.kind)).reduce((acc, f) => acc + parseBytes(f), 0);
       const docBytes = files.filter(f => f.kind === 'document').reduce((acc, f) => acc + parseBytes(f), 0);
@@ -331,8 +414,8 @@
       document.getElementById('stat-docs-size').innerText = `${(docBytes / (1024 * 1024)).toFixed(1)} MB`;
     }
 
-    // --- 4. UPLOAD ENGINE (Multi-file & Drag and Drop) ---
-    async function uploadSingleFile(file, folderName) {
+    // --- 5. UPLOADS ---
+    async function uploadSingleFile(file) {
       const toast = document.getElementById('upload-toast');
       const toastName = document.getElementById('upload-toast-name');
       const toastPct = document.getElementById('upload-toast-pct');
@@ -366,7 +449,7 @@
               reject(new Error(`Upload failed with status ${xhr.status}`));
             }
           };
-          xhr.onerror = () => reject(new Error('Network error during upload'));
+          xhr.onerror = () => reject(new Error('Network error connecting to Render backend'));
           xhr.send(formData);
         });
 
@@ -376,6 +459,7 @@
         else if (file.type.startsWith('audio')) kind = 'audio';
 
         const formattedSize = file.size > 1024 * 1024 ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` : `${(file.size / 1024).toFixed(1)} KB`;
+        const assignedFolder = currentFolder === 'ALL' ? 'Projects' : currentFolder;
 
         const newFileRecord = {
           name: file.name,
@@ -383,11 +467,12 @@
           size: formattedSize,
           bytes: file.size,
           key: uploadResult.fileKey,
-          folder: folderName || (currentFolder === 'ALL' ? 'Projects' : currentFolder)
+          folder: assignedFolder
         };
 
         if (supabaseClient) {
-          await supabaseClient.from('files').insert([newFileRecord]);
+          const { error } = await supabaseClient.from('files').insert([newFileRecord]);
+          if (error) throw error;
         }
       } catch (err) {
         alert("Upload error for " + file.name + ": " + err.message);
@@ -403,18 +488,32 @@
       await loadFiles();
     }
 
-    // --- 5. DELETE FILE (B2 + Supabase) ---
+    // --- 6. FOLDER MOVE & DELETE ---
+    async function moveFileFolder(file, newFolder) {
+      try {
+        if (supabaseClient) {
+          const { error } = await supabaseClient
+            .from('files')
+            .update({ folder: newFolder })
+            .eq('key', file.key);
+
+          if (error) throw error;
+        }
+        await loadFiles();
+      } catch (err) {
+        alert('Could not move file: ' + err.message);
+      }
+    }
+
     async function deleteFile(file, event) {
       event.stopPropagation();
-      if (!confirm(`Are you sure you want to delete "${file.name}"? This removes it permanently from Backblaze B2.`)) return;
+      if (!confirm(`Permanently delete "${file.name}" from Backblaze B2 & database?`)) return;
 
       try {
-        // Delete from Backblaze B2 via backend proxy
         await fetch(`${BACKEND_API_URL}/api/delete/${encodeURIComponent(file.key)}`, {
           method: 'DELETE'
         });
 
-        // Delete row from Supabase
         if (supabaseClient) {
           await supabaseClient.from('files').delete().eq('key', file.key);
         }
@@ -425,7 +524,7 @@
       }
     }
 
-    // --- 6. RENDER FILES & THUMBNAILS ---
+    // --- 7. CARDS & THUMBNAILS ---
     function renderFiles() {
       const container = document.getElementById('file-container');
       const emptyState = document.getElementById('empty-state');
@@ -433,12 +532,11 @@
 
       let filtered = liveFiles.filter(f => {
         const matchesType = (currentFilter === 'All types') || (f.kind === currentFilter);
-        const matchesFolder = (currentFolder === 'ALL') || (f.folder === currentFolder);
+        const matchesFolder = (currentFolder === 'ALL') || ((f.folder || 'Projects') === currentFolder);
         const matchesSearch = f.name.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesType && matchesFolder && matchesSearch;
       });
 
-      // Sort
       filtered.sort((a, b) => {
         if (currentSort === 'newest') return new Date(b.created_at || 0) - new Date(a.created_at || 0);
         if (currentSort === 'oldest') return new Date(a.created_at || 0) - new Date(b.created_at || 0);
@@ -473,17 +571,25 @@
             </div>`;
         }
 
+        let folderOptions = '';
+        knownFolders.forEach(folder => {
+          const isSelected = (file.folder || 'Projects') === folder ? 'selected' : '';
+          folderOptions += `<option value="${folder}" ${isSelected}>📁 ${folder}</option>`;
+        });
+
         item.innerHTML = `
           ${previewHtml}
           <div class="truncate text-[12px] font-medium text-slate-200 group-hover:text-white" title="${file.name}">${file.name}</div>
-          <div class="mt-2 flex items-center justify-between text-[10px] text-slate-400">
+          
+          <div class="mt-2 flex items-center justify-between gap-2 text-[10px] text-slate-400">
             <span>${file.size || '0 KB'}</span>
-            <span class="rounded-md bg-white/[0.05] px-1.5 py-0.5 text-slate-300 font-mono">${file.folder || 'Projects'}</span>
+            <select class="folder-move-select rounded-md bg-[#181a24] border border-white/10 px-2 py-1 text-[10px] text-indigo-300 outline-none hover:border-indigo-400">
+              ${folderOptions}
+            </select>
           </div>
 
-          <!-- Card Actions (Copy Link + Delete) -->
           <div class="mt-3 flex items-center justify-between border-t border-white/[0.06] pt-2">
-            <button class="btn-copy-link flex items-center gap-1 text-[11px] text-indigo-300 hover:text-indigo-200" title="Copy stream link">
+            <button class="btn-copy-link flex items-center gap-1 text-[11px] text-indigo-300 hover:text-indigo-200" title="Copy link">
               <i data-lucide="share-2" class="w-3 h-3"></i> Share
             </button>
             <button class="btn-delete-card text-slate-500 hover:text-rose-400 transition" title="Delete file">
@@ -493,6 +599,14 @@
         `;
 
         item.addEventListener('click', () => openPreview(file));
+
+        const moveSelect = item.querySelector('.folder-move-select');
+        moveSelect.addEventListener('click', (e) => e.stopPropagation());
+        moveSelect.addEventListener('change', (e) => {
+          e.stopPropagation();
+          moveFileFolder(file, e.target.value);
+        });
+
         item.querySelector('.btn-delete-card').addEventListener('click', (e) => deleteFile(file, e));
         item.querySelector('.btn-copy-link').addEventListener('click', (e) => {
           e.stopPropagation();
@@ -505,7 +619,7 @@
       lucide.createIcons();
     }
 
-    // --- 7. MEDIA STREAMING PREVIEW ---
+    // --- 8. PREVIEW & SHARE ---
     function openPreview(file) {
       activePreviewKey = file.key;
       document.getElementById('dashboard-view').classList.add('hidden');
@@ -547,7 +661,7 @@
     function copyShareLink(key) {
       const shareUrl = `${BACKEND_API_URL}/api/stream/${encodeURIComponent(key)}`;
       navigator.clipboard.writeText(shareUrl).then(() => {
-        alert('✅ Share link copied to clipboard!');
+        alert('✅ Direct share link copied to clipboard!');
       }).catch(() => {
         prompt('Copy your link:', shareUrl);
       });
@@ -564,42 +678,35 @@
       document.getElementById('dashboard-view').classList.remove('hidden');
     });
 
-    // --- 8. EVENT LISTENERS ---
+    // --- 9. EVENT LISTENERS ---
     document.getElementById('btn-upload').addEventListener('click', () => document.getElementById('file-input').click());
     document.getElementById('file-input').addEventListener('change', (e) => {
       if (e.target.files.length) handleBatchUpload(e.target.files);
     });
 
-    // Search input
     document.getElementById('search-input').addEventListener('input', (e) => {
       searchQuery = e.target.value;
       renderFiles();
     });
 
-    // Sort select
     document.getElementById('sort-select').addEventListener('change', (e) => {
       currentSort = e.target.value;
       renderFiles();
     });
 
-    // Folder select
     document.getElementById('folder-select').addEventListener('change', (e) => {
       currentFolder = e.target.value;
-      document.getElementById('stat-active-folder').innerText = currentFolder === 'ALL' ? 'All Folders' : currentFolder;
       renderFiles();
     });
 
-    // Create New Folder
     document.getElementById('btn-new-folder').addEventListener('click', () => {
       const folderName = prompt('Enter new folder name:');
       if (folderName && folderName.trim()) {
-        const opt = document.createElement('option');
-        opt.value = folderName.trim();
-        opt.innerText = `📁 ${folderName.trim()}`;
-        document.getElementById('folder-select').appendChild(opt);
-        document.getElementById('folder-select').value = folderName.trim();
-        currentFolder = folderName.trim();
-        document.getElementById('stat-active-folder').innerText = currentFolder;
+        const clean = folderName.trim();
+        knownFolders.add(clean);
+        populateFolderDropdown();
+        document.getElementById('folder-select').value = clean;
+        currentFolder = clean;
         renderFiles();
       }
     });
@@ -627,7 +734,6 @@
       }
     });
 
-    // Filter tabs
     document.querySelectorAll('.filter-tab').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.filter-tab').forEach(b => {
@@ -639,8 +745,10 @@
       });
     });
 
+    // Initialize
     checkAuth();
     loadFiles();
+    checkServerHealth();
     lucide.createIcons();
   </script>
 </body>
