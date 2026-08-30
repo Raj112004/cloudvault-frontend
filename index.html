@@ -160,19 +160,20 @@
   <script>
     // --- 1. CONFIGURATION ---
     const BACKEND_API_URL = "https://cloudvault-backend-utgb.onrender.com";
-    const SUPABASE_URL = "https://YOUR_SUPABASE_PROJECT_ID.supabase.co"; // Paste your Supabase URL from Project Settings -> API
+    const SUPABASE_URL = "https://YOUR_SUPABASE_PROJECT_ID.supabase.co"; // Paste your Supabase Project URL
     const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"; // Paste your Supabase Anon Public Key
 
-    const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+    // Renamed variable to avoid colliding with window.supabase from CDN
+    const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
     let liveFiles = [];
     let currentFilter = 'All types';
 
     // --- 2. FETCH REAL FILES & CALCULATE LIVE ANALYTICS ---
     async function loadFilesFromSupabase() {
-      if (!supabase) return;
+      if (!supabaseClient || SUPABASE_URL.includes("YOUR_SUPABASE")) return;
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('files')
         .select('*')
         .order('created_at', { ascending: false });
@@ -194,7 +195,6 @@
       const usedGB = (totalBytes / (1024 * 1024 * 1024)).toFixed(2);
       const usedMB = (totalBytes / (1024 * 1024)).toFixed(1);
 
-      // SVG Ring Math (106.8 circumference)
       const offset = 106.8 - (106.8 * (usedPct / 100));
       document.getElementById('storage-ring-circle').style.strokeDashoffset = offset;
       document.getElementById('storage-pct-label').innerText = `${usedPct}%`;
@@ -202,7 +202,6 @@
       document.getElementById('storage-bytes-count').innerText = `${usedMB} MB active`;
       document.getElementById('stat-total-files').innerHTML = `${files.length} <span class="text-sm font-normal text-slate-500">files indexed</span>`;
 
-      // Media vs Docs calculation
       const mediaBytes = files.filter(f => ['video', 'audio'].includes(f.kind)).reduce((acc, f) => acc + (f.bytes || 0), 0);
       const docBytes = files.filter(f => f.kind === 'document').reduce((acc, f) => acc + (f.bytes || 0), 0);
 
@@ -230,7 +229,7 @@
           body: JSON.stringify({ filename: file.name, contentType: file.type || 'application/octet-stream' })
         });
         
-        if (!presignedRes.ok) throw new Error('Failed to get upload authorization');
+        if (!presignedRes.ok) throw new Error('Backend failed to authorize upload');
         const { uploadUrl, fileKey } = await presignedRes.json();
 
         // Step B: Direct PUT Upload to Backblaze B2
@@ -256,20 +255,33 @@
         const kind = file.type.startsWith('video') ? 'video' : file.type.startsWith('audio') ? 'audio' : 'document';
         const formattedSize = file.size > 1024 * 1024 ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` : `${(file.size / 1024).toFixed(1)} KB`;
 
-        const { error: insertError } = await supabase.from('files').insert([{
-          name: file.name,
-          kind: kind,
-          size: formattedSize,
-          bytes: file.size,
-          key: fileKey,
-          folder: 'Projects'
-        }]);
+        if (supabaseClient && !SUPABASE_URL.includes("YOUR_SUPABASE")) {
+          const { error: insertError } = await supabaseClient.from('files').insert([{
+            name: file.name,
+            kind: kind,
+            size: formattedSize,
+            bytes: file.size,
+            key: fileKey,
+            folder: 'Projects'
+          }]);
 
-        if (insertError) throw insertError;
+          if (insertError) throw insertError;
+          await loadFilesFromSupabase();
+        } else {
+          liveFiles.unshift({
+            name: file.name,
+            kind: kind,
+            size: formattedSize,
+            bytes: file.size,
+            key: fileKey,
+            created_at: new Date().toISOString()
+          });
+          updateStorageAnalytics(liveFiles);
+          renderFiles();
+        }
 
-        await loadFilesFromSupabase();
       } catch (err) {
-        alert("Upload failed: " + err.message);
+        alert("Upload error: " + err.message);
       } finally {
         setTimeout(() => toast.classList.add('hidden'), 2000);
       }
@@ -346,7 +358,6 @@
       if (e.target.files.length) handleRealUpload(e.target.files[0]);
     });
 
-    // Filter clicks
     document.querySelectorAll('.filter-tab').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.filter-tab').forEach(b => {
@@ -358,7 +369,6 @@
       });
     });
 
-    // Initialize
     loadFilesFromSupabase();
     lucide.createIcons();
   </script>
