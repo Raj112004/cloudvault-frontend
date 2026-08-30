@@ -8,7 +8,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
-  <!-- Plyr Video Player -->
+  <!-- Plyr Player -->
   <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
   <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
 
@@ -80,6 +80,7 @@
 
     <!-- DASHBOARD VIEW -->
     <div id="dashboard-view">
+      <!-- Header -->
       <div class="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
         <div>
           <div class="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-indigo-300">
@@ -112,7 +113,7 @@
         </div>
       </div>
 
-      <!-- Analytics Grid -->
+      <!-- Storage Analytics Grid -->
       <div class="mb-8 grid gap-4 xl:grid-cols-[1.35fr_1fr_1fr]">
         <div class="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-indigo-500/[0.16] via-[#151624] to-cyan-400/[0.06] p-5">
           <div class="relative flex items-center gap-5">
@@ -231,7 +232,7 @@
           <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.04] text-slate-500">
             <i data-lucide="inbox" class="h-7 w-7"></i>
           </div>
-          <p class="text-sm font-medium text-slate-300">No files in this view</p>
+          <p class="text-sm font-medium text-slate-300">No files in this folder</p>
           <p class="mt-1 text-xs text-slate-500">Drag & drop files anywhere on this page or click Upload</p>
         </div>
       </div>
@@ -325,7 +326,7 @@
       });
     });
 
-    // Auth
+    // Authentication
     const pinModal = document.getElementById('pin-modal');
     const pinInput = document.getElementById('pin-input');
     const pinError = document.getElementById('pin-error');
@@ -361,7 +362,7 @@
       location.reload();
     });
 
-    // Health
+    // Health monitors
     async function checkServerHealth() {
       const b2Title = document.getElementById('b2-status-title');
       const b2Badge = document.getElementById('b2-status-badge');
@@ -725,7 +726,6 @@
         const item = document.createElement('div');
         item.className = 'group relative text-left rounded-2xl border border-white/[0.08] bg-white/[0.025] p-3.5 hover:border-indigo-400/30 hover:bg-white/[0.045] transition-all cursor-pointer';
         
-        // Use Query-Parameter Stream URLs
         const streamUrl = `${BACKEND_API_URL}/api/stream?key=${encodeURIComponent(file.key)}`;
         const kind = file.kind || (file.name.match(/\.(mp4|mkv|mov|webm)$/i) ? 'video' : file.name.match(/\.(jpg|jpeg|png|gif)$/i) ? 'image' : 'document');
 
@@ -733,7 +733,7 @@
         if (kind === 'image') {
           previewHtml = `
             <div class="relative mb-3 flex h-36 w-full items-center justify-center overflow-hidden rounded-xl bg-black/40">
-              <img src="${streamUrl}" alt="${file.name}" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy" />
+              <img src="${streamUrl}" alt="${file.name}" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'flex h-full w-full items-center justify-center bg-indigo-500/10 text-indigo-400\\'><i data-lucide=\\'image\\' class=\\'w-8 h-8\\'></i></div>'; lucide.createIcons();" />
             </div>`;
         } else if (kind === 'video') {
           previewHtml = `
